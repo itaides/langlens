@@ -699,7 +699,11 @@ function showScanner() {
   // Header actions (export/import + close)
   const headerActions = createEl('div', 'le-scanner-header-actions')
 
-  const rescanBtn = createEl('button', 'le-scanner-action-btn le-scanner-rescan-btn', 'Rescan')
+  const rescanBtn = createEl(
+    'button',
+    'le-scanner-action-btn le-scanner-rescan-btn',
+    'Rescan',
+  )
   rescanBtn.title = 'Rescan page for strings'
   rescanBtn.addEventListener('click', () => {
     if (_rescan) _rescan()
