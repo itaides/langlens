@@ -13,6 +13,7 @@ import { stat } from 'node:fs/promises'
 import { startServer, DEFAULT_PORT } from './server.js'
 import { checkCoverage, formatCoverageReport } from './coverage.js'
 import { loadConfig, runOnboarding } from './onboarding.js'
+import { detectFramework, type FrameworkInfo } from './detect-framework.js'
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -64,6 +65,7 @@ interface CliArgs {
   verbose: boolean
   help: boolean
   version: boolean
+  framework?: FrameworkInfo
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -155,7 +157,14 @@ async function validateLocalesDir(dir: string): Promise<void> {
 
 async function runServe(args: CliArgs): Promise<void> {
   await validateLocalesDir(args.localesDir)
-  startServer({ localesDir: args.localesDir, port: args.port })
+
+  // Detect framework if not already set (e.g. from config or onboarding)
+  const framework = args.framework ?? await detectFramework()
+  if (framework.name !== 'unknown') {
+    console.log(`Framework: ${framework.name} (interpolation: ${framework.interpolation.prefix}var${framework.interpolation.suffix})`)
+  }
+
+  startServer({ localesDir: args.localesDir, port: args.port, framework })
 }
 
 async function runCoverage(args: CliArgs): Promise<void> {
@@ -203,12 +212,14 @@ async function main(): Promise<void> {
       args.port = saved.port
       args.sourceLang = saved.sourceLang
       args.targetLang = saved.targetLang
+      args.framework = saved.framework
     } else {
       const config = await runOnboarding()
       args.localesDir = resolve(config.localesDir)
       args.port = config.port
       args.sourceLang = config.sourceLang
       args.targetLang = config.targetLang
+      args.framework = config.framework
     }
   }
 

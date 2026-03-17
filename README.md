@@ -7,7 +7,10 @@ Built for teams where content editors, PMs, and translators need to review and f
 ## Quick Start
 
 ```bash
-# Start the server (pick your runtime)
+# Interactive setup (auto-detects your i18n framework and locales)
+npx langlens
+
+# Or specify the path directly
 npx langlens ./path/to/locales
 bun run langlens ./path/to/locales
 ```
@@ -56,15 +59,22 @@ The extension loads all your translation JSON files via the server, builds a rev
 ### 1. Start the server
 
 ```bash
-# Node.js
-npx langlens ./src/locales
+# Interactive setup — auto-detects framework, locales dir, languages
+npx langlens
 
-# Bun
+# Or specify directly
+npx langlens ./src/locales
 bun run langlens ./src/locales
 
 # With options
 npx langlens ./src/locales --port 3456
 ```
+
+On first run without arguments, LangLens will:
+- Detect your i18n framework (i18next, react-intl, next-intl, vue-i18n, ngx-translate)
+- Scan for locale directories
+- Ask for source/target languages and port
+- Save config to `.langlensrc.json` (next run just uses it)
 
 The server expects locale files structured as:
 ```
@@ -121,8 +131,12 @@ Environment Variables:
 ```
 langlens/
 ├── src/
-│   ├── cli.ts            # CLI entry (npx langlens)
-│   └── server.ts         # HTTP server
+│   ├── cli.ts              # CLI entry (npx langlens)
+│   ├── server.ts           # HTTP server
+│   ├── locale-fs.ts        # Locale file operations
+│   ├── coverage.ts         # Translation coverage checker
+│   ├── onboarding.ts       # Interactive setup wizard
+│   └── detect-framework.ts # i18n framework auto-detection
 ├── extension/
 │   ├── manifest.json     # Chrome extension manifest v3
 │   ├── content.js        # Content script
@@ -140,7 +154,7 @@ langlens/
 
 - Node.js 18+ or Bun (for the server)
 - Chrome or Chromium-based browser (for the extension)
-- Locale files in nested JSON format (i18next, react-intl, etc.)
+- Locale files in nested JSON format (auto-detects i18next, react-intl, next-intl, vue-i18n, ngx-translate)
 
 ## Limitations
 

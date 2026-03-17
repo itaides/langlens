@@ -9,6 +9,7 @@ import { createInterface } from 'node:readline/promises'
 import { readdir, stat, readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, relative } from 'node:path'
 import { DEFAULT_PORT } from './server.js'
+import { detectFramework, type FrameworkInfo } from './detect-framework.js'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -17,6 +18,7 @@ export interface LanglensConfig {
   port: number
   sourceLang: string
   targetLang: string
+  framework: FrameworkInfo
 }
 
 const CONFIG_FILE = '.langlensrc.json'
@@ -56,10 +58,11 @@ interface DetectedDir {
   languages: string[]
 }
 
-async function detectLocalesDirs(): Promise<DetectedDir[]> {
+async function detectLocalesDirs(extraPaths: string[] = []): Promise<DetectedDir[]> {
   const found: DetectedDir[] = []
+  const allPaths = [...new Set([...extraPaths, ...COMMON_PATHS])]
 
-  for (const candidate of COMMON_PATHS) {
+  for (const candidate of allPaths) {
     try {
       const s = await stat(candidate)
       if (!s.isDirectory()) continue
@@ -106,11 +109,21 @@ export async function runOnboarding(): Promise<LanglensConfig> {
   console.log('  Translations are saved to disk — watch mode hot-reloads them.')
   console.log()
 
+  // ─── Framework detection ──────────────────────────────────
+
+  const framework = await detectFramework()
+
+  if (framework.name !== 'unknown') {
+    console.log(`  Detected i18n framework: ${framework.name}`)
+    console.log(`  Interpolation: ${framework.interpolation.prefix}variable${framework.interpolation.suffix}`)
+    console.log()
+  }
+
   // ─── Locales directory ────────────────────────────────────
 
   let localesDir: string
 
-  const detected = await detectLocalesDirs()
+  const detected = await detectLocalesDirs(framework.suggestedPaths)
 
   if (detected.length > 0) {
     console.log('  Found locale directories:')
@@ -189,6 +202,7 @@ export async function runOnboarding(): Promise<LanglensConfig> {
     port,
     sourceLang,
     targetLang,
+    framework,
   }
 
   await saveConfig(config)

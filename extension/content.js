@@ -25,6 +25,7 @@ let activeMode = null // null | MODES.EDIT | MODES.SCAN
 let translations = {}
 let reverseMap = new Map()
 let availableLangs = []
+let frameworkConfig = { interpolation: { prefix: '{{', suffix: '}}' } }
 let currentOverlay = null
 let currentHighlight = null
 let modeBanner = null
@@ -69,6 +70,15 @@ function unflattenJson(flat) {
 async function loadTranslations() {
   const { backendUrl, sourceLang, targetLang } = config
   try {
+    // Fetch framework config (interpolation pattern, etc.)
+    try {
+      const cfgRes = await fetch(`${backendUrl}/api/config`)
+      const cfgData = await cfgRes.json()
+      if (cfgData.framework?.interpolation) {
+        frameworkConfig = cfgData.framework
+      }
+    } catch (_) { /* use defaults */ }
+
     const nsRes = await fetch(`${backendUrl}/api/namespaces`)
     const namespaces = await nsRes.json()
 
@@ -98,13 +108,16 @@ async function loadTranslations() {
   }
 }
 
-// Fuzzy patterns for strings with {{variables}}
+// Fuzzy patterns for strings with interpolated variables
 let fuzzyPatterns = [] // { regex, match }
 
 function addFuzzyPattern(value, entry) {
-  if (!value.includes('{{')) return
+  const { prefix, suffix } = frameworkConfig.interpolation
+  if (!value.includes(prefix)) return
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const pattern = escaped.replace(/\\\{\\{[^}]+\\\}\\}/g, '.+')
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const escapedSuffix = suffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = escaped.replace(new RegExp(`${escapedPrefix}[^}]+${escapedSuffix}`, 'g'), '.+')
   try {
     fuzzyPatterns.push({ regex: new RegExp(`^${pattern}$`), match: entry })
   } catch (_) { /* invalid regex, skip */ }

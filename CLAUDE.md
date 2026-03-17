@@ -30,12 +30,15 @@ No test framework is set up yet. No linter configured.
 Two independent codebases in one repo:
 
 ### Server (TypeScript, `src/`)
-- **`cli.ts`** — Entry point. Parses CLI args, dispatches to `serve` or `coverage` subcommand.
-- **`server.ts`** — Node.js `http.createServer` with two endpoints:
+- **`cli.ts`** — Entry point. Parses CLI args, dispatches to `serve` or `coverage` subcommand. Triggers onboarding when no args provided.
+- **`server.ts`** — Node.js `http.createServer` with endpoints:
+  - `GET /api/config` — returns detected framework info (interpolation pattern, etc.)
   - `GET /api/namespaces` — lists namespace directories
   - `GET/PUT /api/translations/:namespace` — read/write all language files for a namespace
 - **`locale-fs.ts`** — Shared filesystem ops: namespace discovery, JSON read/parse, `flattenJson` helper.
 - **`coverage.ts`** — Compares source vs target language keys per namespace, outputs a formatted report. Used by `langlens coverage` CLI subcommand for CI gating.
+- **`onboarding.ts`** — Interactive setup wizard. Auto-detects locales dirs, saves config to `.langlensrc.json`.
+- **`detect-framework.ts`** — Reads project's `package.json` to identify i18n framework (i18next, react-intl, next-intl, vue-i18n, ngx-translate). Provides interpolation patterns and conventional paths.
 
 The server has zero dependencies — only `node:http`, `node:fs`, `node:path`.
 

@@ -53,6 +53,18 @@
   - [x] `--source` / `--target` language flags
 - [x] Project restructured: `src/` for TypeScript, `extension/` for Chrome, `dist/` for compiled output
 
+## v7
+- [x] Auto-detect i18n framework (i18next, react-intl, next-intl, vue-i18n, ngx-translate)
+  - [x] Framework detection from project's package.json
+  - [x] Smarter locales directory suggestions in onboarding
+  - [x] Dynamic interpolation matching in extension (`{{var}}` vs `{var}`)
+  - [x] Framework info displayed in CLI and exposed via `/api/config`
+- [x] Interactive onboarding wizard (`npx langlens` with no args)
+  - [x] Auto-detect locales directories
+  - [x] Config saved to `.langlensrc.json`
+- [x] Path traversal protection on namespace/language parameters
+- [x] CORS restricted to chrome-extension:// and localhost origins
+
 ## Ideas (Unscheduled)
 - [ ] Publish to npm registry (`npx langlens ./locales` — zero config for users)
 - [ ] Firefox extension
@@ -63,6 +75,5 @@
 - [ ] RTL preview toggle — switch page direction without changing language
 - [ ] Screenshot capture — save context screenshots with translation keys
 - [ ] Webhook on save — trigger CI, notify Slack, etc.
-- [ ] Auto-detect i18n framework (i18next, react-intl, vue-i18n)
 - [ ] Show which React component renders each string (via data attributes)
 - [ ] Plural form detection and editing

@@ -9,12 +9,14 @@ import { readdir, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { getNamespaces, readLocaleFile, type TranslationData } from './locale-fs.js'
+import type { FrameworkInfo } from './detect-framework.js'
 
 // ─── Types ──────────────────────────────────────────────────
 
 interface ServerConfig {
   localesDir: string
   port: number
+  framework?: FrameworkInfo
 }
 
 type NamespaceTranslations = Record<string, TranslationData>
@@ -115,6 +117,12 @@ function createRequestHandler(config: ServerConfig) {
     if (method === 'OPTIONS') {
       res.writeHead(204, getCorsHeaders(origin))
       res.end()
+      return
+    }
+
+    // GET /api/config
+    if (url.pathname === '/api/config' && method === 'GET') {
+      sendJson(res, { framework: config.framework ?? null }, 200, origin)
       return
     }
 
