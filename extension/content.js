@@ -44,11 +44,9 @@ function flattenJson(obj, prefix = '') {
     const fullKey = prefix ? `${prefix}.${key}` : key
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       Object.assign(result, flattenJson(value, fullKey))
-    } else if (Array.isArray(value)) {
-      // Preserve arrays as JSON to avoid data corruption
-      result[fullKey] = JSON.stringify(value)
     } else {
-      result[fullKey] = String(value ?? '')
+      // Preserve original type — avoids corrupting arrays, numbers, booleans, null
+      result[fullKey] = value
     }
   }
   return result
@@ -63,12 +61,7 @@ function unflattenJson(flat) {
       if (!(parts[i] in current)) current[parts[i]] = {}
       current = current[parts[i]]
     }
-    // Restore JSON arrays that were preserved during flattening
-    let finalValue = value
-    if (typeof value === 'string' && value.startsWith('[')) {
-      try { finalValue = JSON.parse(value) } catch (_) { /* keep as string */ }
-    }
-    current[parts[parts.length - 1]] = finalValue
+    current[parts[parts.length - 1]] = value
   }
   return result
 }
@@ -137,27 +130,27 @@ function buildReverseMap() {
 
   for (const [ns, { source, target }] of Object.entries(translations)) {
     for (const [key, value] of Object.entries(source)) {
-      if (value && value.length > 1) {
-        const normalized = normalizeText(value)
-        const entry = { namespace: ns, key, source: value, target: target[key] || '' }
+      if (typeof value !== 'string' || value.length <= 1) continue
+      const normalized = normalizeText(value)
+      const targetVal = typeof target[key] === 'string' ? target[key] : ''
+      const entry = { namespace: ns, key, source: value, target: targetVal }
 
-        if (!reverseMap.has(normalized)) {
-          reverseMap.set(normalized, entry)
-        }
-
-        addFuzzyPattern(value, entry)
+      if (!reverseMap.has(normalized)) {
+        reverseMap.set(normalized, entry)
       }
+
+      addFuzzyPattern(value, entry)
     }
     for (const [key, value] of Object.entries(target)) {
-      if (value && value.length > 1) {
-        const normalized = normalizeText(value)
-        const entry = { namespace: ns, key, source: source[key] || '', target: value }
-        if (!reverseMap.has(normalized)) {
-          reverseMap.set(normalized, entry)
-        }
-
-        addFuzzyPattern(value, entry)
+      if (typeof value !== 'string' || value.length <= 1) continue
+      const normalized = normalizeText(value)
+      const sourceVal = typeof source[key] === 'string' ? source[key] : ''
+      const entry = { namespace: ns, key, source: sourceVal, target: value }
+      if (!reverseMap.has(normalized)) {
+        reverseMap.set(normalized, entry)
       }
+
+      addFuzzyPattern(value, entry)
     }
   }
 }

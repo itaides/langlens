@@ -158,10 +158,28 @@ langlens/
 - Chrome or Chromium-based browser (for the extension)
 - Locale files in nested JSON format (auto-detects i18next, react-intl, next-intl, vue-i18n, ngx-translate)
 
+## Supported Locale Format
+
+LangLens works with **nested JSON locale files** (the standard for i18next, react-intl, next-intl, vue-i18n, ngx-translate):
+
+```json
+{
+  "dashboard": {
+    "welcome": "Welcome back",
+    "events": "Upcoming Events"
+  }
+}
+```
+
+- String values — fully supported (edit, scan, search, export/import)
+- Nested objects — flattened to dot-notation keys (`dashboard.welcome`)
+- Arrays, numbers, booleans, null — preserved on save but not editable through the UI
+- Interpolated variables — matched via fuzzy patterns (`{{name}}`, `{count}`, etc.)
+
 ## Limitations
 
-- Reverse lookup can't match strings with interpolated variables rendered as final text (e.g., "Hello, John" won't match `"Hello, {{name}}"`) — fuzzy matching covers most cases
 - Very short strings (1-2 characters) are skipped to avoid false positives
+- Non-string values (arrays, objects used as values) are preserved but cannot be edited through the extension
 - The extension runs on localhost URLs by default — edit `manifest.json` for other hosts
 
 ## License
