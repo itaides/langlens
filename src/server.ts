@@ -6,10 +6,18 @@
  */
 
 import { readdir, writeFile } from 'node:fs/promises'
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from 'node:http'
 import { join, resolve } from 'node:path'
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { getNamespaces, readLocaleFile, type TranslationData } from './locale-fs.js'
 import type { FrameworkInfo } from './detect-framework.js'
+import {
+  getNamespaces,
+  readLocaleFile,
+  type TranslationData,
+} from './locale-fs.js'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -26,12 +34,16 @@ type NamespaceTranslations = Record<string, TranslationData>
 const DEFAULT_PORT = 5567
 const MAX_BODY_SIZE = 5 * 1024 * 1024 // 5 MB
 
-const ALLOWED_ORIGIN_PATTERN = /^(chrome-extension:\/\/|http:\/\/localhost(:\d+)?$)/
+const ALLOWED_ORIGIN_PATTERN =
+  /^(chrome-extension:\/\/|http:\/\/localhost(:\d+)?$)/
 
 function getCorsHeaders(origin: string | undefined): Record<string, string> {
   return {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': origin && ALLOWED_ORIGIN_PATTERN.test(origin) ? origin : 'http://localhost',
+    'Access-Control-Allow-Origin':
+      origin && ALLOWED_ORIGIN_PATTERN.test(origin)
+        ? origin
+        : 'http://localhost',
     'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   }
@@ -41,7 +53,7 @@ function getCorsHeaders(origin: string | undefined): Record<string, string> {
 
 function isSafePath(base: string, segment: string): boolean {
   const resolved = resolve(base, segment)
-  return resolved.startsWith(resolve(base) + '/')
+  return resolved.startsWith(`${resolve(base)}/`)
 }
 
 function isSimpleName(name: string): boolean {
@@ -50,7 +62,10 @@ function isSimpleName(name: string): boolean {
 
 // ─── File Operations ────────────────────────────────────────
 
-async function getTranslations(localesDir: string, namespace: string): Promise<NamespaceTranslations> {
+async function getTranslations(
+  localesDir: string,
+  namespace: string,
+): Promise<NamespaceTranslations> {
   const dir = join(localesDir, namespace)
   const files = await readdir(dir)
   const jsonFiles = files.filter((file) => file.endsWith('.json'))
@@ -73,17 +88,27 @@ async function saveTranslation(
   data: TranslationData,
 ): Promise<void> {
   const filePath = join(localesDir, namespace, `${lang}.json`)
-  await writeFile(filePath, JSON.stringify(data, null, 2) + '\n', 'utf-8')
+  await writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, 'utf-8')
 }
 
 // ─── HTTP Helpers ───────────────────────────────────────────
 
-function sendJson(res: ServerResponse, data: unknown, status = 200, origin?: string): void {
+function sendJson(
+  res: ServerResponse,
+  data: unknown,
+  status = 200,
+  origin?: string,
+): void {
   res.writeHead(status, getCorsHeaders(origin))
   res.end(JSON.stringify(data))
 }
 
-function sendError(res: ServerResponse, message: string, status = 404, origin?: string): void {
+function sendError(
+  res: ServerResponse,
+  message: string,
+  status = 404,
+  origin?: string,
+): void {
   res.writeHead(status, getCorsHeaders(origin))
   res.end(JSON.stringify({ error: message }))
 }
@@ -151,10 +176,15 @@ function createRequestHandler(config: ServerConfig) {
       }
 
       if (method === 'PUT') {
-        const body = JSON.parse(await readBody(req)) as Record<string, TranslationData>
+        const body = JSON.parse(await readBody(req)) as Record<
+          string,
+          TranslationData
+        >
 
         // Validate language keys — must be simple names (e.g. "en", "fr-CA")
-        const invalidLang = Object.keys(body).find((lang) => !isSimpleName(lang))
+        const invalidLang = Object.keys(body).find(
+          (lang) => !isSimpleName(lang),
+        )
         if (invalidLang) {
           sendError(res, `Invalid language key: ${invalidLang}`, 400, origin)
           return
@@ -182,7 +212,8 @@ export function startServer(config: ServerConfig): void {
     try {
       await handler(req, res)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Internal server error'
+      const message =
+        err instanceof Error ? err.message : 'Internal server error'
       sendError(res, message, 500)
     }
   })
@@ -193,4 +224,4 @@ export function startServer(config: ServerConfig): void {
   })
 }
 
-export { type ServerConfig, DEFAULT_PORT }
+export { DEFAULT_PORT, type ServerConfig }

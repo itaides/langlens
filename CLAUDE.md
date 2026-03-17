@@ -26,7 +26,7 @@ node dist/cli.js
 node dist/cli.js coverage ./path/to/locales --target fr --threshold 90 --verbose
 ```
 
-No test framework is set up yet. No linter configured.
+No test framework is set up yet. Biome is used for linting and formatting.
 
 **Always use `bun` instead of `npm` for running scripts and installing packages.**
 

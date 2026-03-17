@@ -21,11 +21,19 @@ export interface FrameworkInfo {
 
 // ─── Framework Definitions ──────────────────────────────────
 
-const FRAMEWORKS: Record<string, Omit<FrameworkInfo, 'name'> & { packages: string[] }> = {
-  'i18next': {
+const FRAMEWORKS: Record<
+  string,
+  Omit<FrameworkInfo, 'name'> & { packages: string[] }
+> = {
+  i18next: {
     packages: ['i18next', 'react-i18next', 'next-i18next'],
     interpolation: { prefix: '{{', suffix: '}}' },
-    suggestedPaths: ['public/locales', 'locales', 'src/locales', 'assets/locales'],
+    suggestedPaths: [
+      'public/locales',
+      'locales',
+      'src/locales',
+      'assets/locales',
+    ],
   },
   'next-intl': {
     packages: ['next-intl'],
@@ -57,7 +65,9 @@ const DEFAULT_FRAMEWORK: FrameworkInfo = {
 
 // ─── Detection ──────────────────────────────────────────────
 
-export async function detectFramework(projectDir: string = process.cwd()): Promise<FrameworkInfo> {
+export async function detectFramework(
+  projectDir: string = process.cwd(),
+): Promise<FrameworkInfo> {
   let pkg: Record<string, Record<string, string>>
   try {
     const raw = await readFile(join(projectDir, 'package.json'), 'utf-8')

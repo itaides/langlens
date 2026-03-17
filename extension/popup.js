@@ -13,7 +13,8 @@ chrome.storage.sync.get('llConfig', ({ llConfig }) => {
 document.getElementById('saveBtn').addEventListener('click', () => {
   const config = {}
   for (const field of FIELDS) {
-    config[field] = document.getElementById(field).value.trim() || DEFAULTS[field]
+    config[field] =
+      document.getElementById(field).value.trim() || DEFAULTS[field]
   }
 
   const status = document.getElementById('status')
@@ -27,6 +28,8 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 
     status.textContent = 'Settings saved! Reload your app page.'
     status.className = 'status status-ok'
-    setTimeout(() => { status.textContent = '' }, 3000)
+    setTimeout(() => {
+      status.textContent = ''
+    }, 3000)
   })
 })

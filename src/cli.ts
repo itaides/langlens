@@ -8,12 +8,12 @@
  *   npx langlens coverage [locales-dir] [options]    Check translation coverage
  */
 
-import { resolve } from 'node:path'
 import { stat } from 'node:fs/promises'
-import { startServer, DEFAULT_PORT } from './server.js'
+import { resolve } from 'node:path'
 import { checkCoverage, formatCoverageReport } from './coverage.js'
-import { loadConfig, runOnboarding } from './onboarding.js'
 import { detectFramework, type FrameworkInfo } from './detect-framework.js'
+import { loadConfig, runOnboarding } from './onboarding.js'
+import { DEFAULT_PORT, startServer } from './server.js'
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -90,13 +90,22 @@ function parseArgs(argv: string[]): CliArgs {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]
 
-    if (arg === '--help' || arg === '-h') { help = true; continue }
-    if (arg === '--version' || arg === '-v') { version = true; continue }
-    if (arg === '--verbose') { verbose = true; continue }
+    if (arg === '--help' || arg === '-h') {
+      help = true
+      continue
+    }
+    if (arg === '--version' || arg === '-v') {
+      version = true
+      continue
+    }
+    if (arg === '--verbose') {
+      verbose = true
+      continue
+    }
 
     if (arg === '--port' || arg === '-p') {
       const next = args[++i]
-      if (!next || isNaN(parseInt(next, 10))) {
+      if (!next || Number.isNaN(parseInt(next, 10))) {
         console.error('Error: --port requires a number')
         process.exit(1)
       }
@@ -116,7 +125,7 @@ function parseArgs(argv: string[]): CliArgs {
 
     if (arg === '--threshold') {
       const next = args[++i]
-      if (!next || isNaN(parseInt(next, 10))) {
+      if (!next || Number.isNaN(parseInt(next, 10))) {
         console.error('Error: --threshold requires a number')
         process.exit(1)
       }
@@ -134,7 +143,17 @@ function parseArgs(argv: string[]): CliArgs {
     process.exit(1)
   }
 
-  return { command, localesDir: resolve(localesDir), port, sourceLang, targetLang, threshold, verbose, help, version }
+  return {
+    command,
+    localesDir: resolve(localesDir),
+    port,
+    sourceLang,
+    targetLang,
+    threshold,
+    verbose,
+    help,
+    version,
+  }
 }
 
 // ─── Validation ─────────────────────────────────────────────
@@ -148,7 +167,9 @@ async function validateLocalesDir(dir: string): Promise<void> {
     }
   } catch {
     console.error(`Error: Directory not found: ${dir}`)
-    console.error('Create it or specify a different path: npx langlens ./path/to/locales')
+    console.error(
+      'Create it or specify a different path: npx langlens ./path/to/locales',
+    )
     process.exit(1)
   }
 }
@@ -159,9 +180,11 @@ async function runServe(args: CliArgs): Promise<void> {
   await validateLocalesDir(args.localesDir)
 
   // Detect framework if not already set (e.g. from config or onboarding)
-  const framework = args.framework ?? await detectFramework()
+  const framework = args.framework ?? (await detectFramework())
   if (framework.name !== 'unknown') {
-    console.log(`Framework: ${framework.name} (interpolation: ${framework.interpolation.prefix}var${framework.interpolation.suffix})`)
+    console.log(
+      `Framework: ${framework.name} (interpolation: ${framework.interpolation.prefix}var${framework.interpolation.suffix})`,
+    )
   }
 
   startServer({ localesDir: args.localesDir, port: args.port, framework })
@@ -170,12 +193,18 @@ async function runServe(args: CliArgs): Promise<void> {
 async function runCoverage(args: CliArgs): Promise<void> {
   await validateLocalesDir(args.localesDir)
 
-  const summary = await checkCoverage(args.localesDir, args.sourceLang, args.targetLang)
+  const summary = await checkCoverage(
+    args.localesDir,
+    args.sourceLang,
+    args.targetLang,
+  )
   const report = formatCoverageReport(summary, args.verbose)
   console.log(report)
 
   if (args.threshold > 0 && summary.coveragePercent < args.threshold) {
-    console.error(`Coverage ${summary.coveragePercent}% is below threshold ${args.threshold}%`)
+    console.error(
+      `Coverage ${summary.coveragePercent}% is below threshold ${args.threshold}%`,
+    )
     process.exit(1)
   }
 }

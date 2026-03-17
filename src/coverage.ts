@@ -8,7 +8,7 @@
  *   langlens coverage ./locales --target he --threshold 90
  */
 
-import { getNamespaces, readLocaleFile, flattenJson } from './locale-fs.js'
+import { flattenJson, getNamespaces, readLocaleFile } from './locale-fs.js'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -46,7 +46,8 @@ async function checkNamespaceCoverage(
 
   const totalKeys = sourceKeys.length
   const translatedKeys = totalKeys - missingKeys.length
-  const coveragePercent = totalKeys > 0 ? Math.round((translatedKeys / totalKeys) * 100) : 100
+  const coveragePercent =
+    totalKeys > 0 ? Math.round((translatedKeys / totalKeys) * 100) : 100
 
   return { namespace, totalKeys, translatedKeys, missingKeys, coveragePercent }
 }
@@ -59,19 +60,25 @@ export async function checkCoverage(
   const namespaces = await getNamespaces(localesDir)
 
   const results = await Promise.all(
-    namespaces.map((ns) => checkNamespaceCoverage(localesDir, ns, sourceLang, targetLang)),
+    namespaces.map((ns) =>
+      checkNamespaceCoverage(localesDir, ns, sourceLang, targetLang),
+    ),
   )
 
   const totalKeys = results.reduce((sum, r) => sum + r.totalKeys, 0)
   const translatedKeys = results.reduce((sum, r) => sum + r.translatedKeys, 0)
-  const coveragePercent = totalKeys > 0 ? Math.round((translatedKeys / totalKeys) * 100) : 100
+  const coveragePercent =
+    totalKeys > 0 ? Math.round((translatedKeys / totalKeys) * 100) : 100
 
   return { results, totalKeys, translatedKeys, coveragePercent }
 }
 
 // ─── Report Formatting ──────────────────────────────────────
 
-export function formatCoverageReport(summary: CoverageSummary, verbose = false): string {
+export function formatCoverageReport(
+  summary: CoverageSummary,
+  verbose = false,
+): string {
   const lines: string[] = []
   const missingTotal = summary.totalKeys - summary.translatedKeys
 
@@ -82,8 +89,15 @@ export function formatCoverageReport(summary: CoverageSummary, verbose = false):
 
   for (const result of summary.results) {
     const bar = makeProgressBar(result.coveragePercent)
-    const status = result.coveragePercent === 100 ? '✓' : result.coveragePercent >= 80 ? '◐' : '✗'
-    lines.push(`  ${status} ${result.namespace.padEnd(20)} ${bar} ${result.coveragePercent}% (${result.translatedKeys}/${result.totalKeys})`)
+    const status =
+      result.coveragePercent === 100
+        ? '✓'
+        : result.coveragePercent >= 80
+          ? '◐'
+          : '✗'
+    lines.push(
+      `  ${status} ${result.namespace.padEnd(20)} ${bar} ${result.coveragePercent}% (${result.translatedKeys}/${result.totalKeys})`,
+    )
 
     if (verbose && result.missingKeys.length > 0) {
       for (const key of result.missingKeys.slice(0, 10)) {
@@ -97,7 +111,9 @@ export function formatCoverageReport(summary: CoverageSummary, verbose = false):
 
   lines.push('')
   lines.push('─'.repeat(42))
-  lines.push(`  Total: ${summary.coveragePercent}% (${summary.translatedKeys}/${summary.totalKeys} keys)`)
+  lines.push(
+    `  Total: ${summary.coveragePercent}% (${summary.translatedKeys}/${summary.totalKeys} keys)`,
+  )
 
   if (missingTotal > 0) {
     lines.push(`  Missing: ${missingTotal} keys`)

@@ -42,14 +42,20 @@ export async function readLocaleFile(
 // ─── JSON Flattening ────────────────────────────────────────
 
 /** Recursively flattens a nested object into dot-separated key-value pairs. */
-export function flattenJson(obj: Record<string, unknown>, prefix = ''): Record<string, unknown> {
+export function flattenJson(
+  obj: Record<string, unknown>,
+  prefix = '',
+): Record<string, unknown> {
   const result: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(obj)) {
     const fullKey = prefix ? `${prefix}.${key}` : key
 
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      Object.assign(result, flattenJson(value as Record<string, unknown>, fullKey))
+      Object.assign(
+        result,
+        flattenJson(value as Record<string, unknown>, fullKey),
+      )
     } else {
       // Preserve original type — avoids corrupting arrays, numbers, booleans, null
       result[fullKey] = value
