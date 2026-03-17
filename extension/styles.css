@@ -490,6 +490,16 @@
     letter-spacing: -0.01em;
   }
 
+  .le-scanner-page-url {
+    font-size: 10px;
+    color: var(--le-muted);
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+
   .le-scanner-header-actions {
     display: flex;
     align-items: center;

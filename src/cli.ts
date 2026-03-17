@@ -13,11 +13,12 @@ import { resolve } from 'node:path'
 import { checkCoverage, formatCoverageReport } from './coverage.js'
 import { detectFramework, type FrameworkInfo } from './detect-framework.js'
 import { loadConfig, runOnboarding } from './onboarding.js'
+import { formatScanReport, scanSourceFiles } from './scan.js'
 import { DEFAULT_PORT, startServer } from './server.js'
 
 // ─── Constants ──────────────────────────────────────────────
 
-const VERSION = '1.1.0'
+const VERSION = '1.2.0'
 
 const HELP_TEXT = `
 LangLens v${VERSION} — See and edit translations on your running app
@@ -25,6 +26,7 @@ LangLens v${VERSION} — See and edit translations on your running app
 Usage:
   npx langlens [locales-dir] [options]          Start the dev server
   npx langlens coverage [locales-dir] [options] Check translation coverage
+  npx langlens scan [src-dir] [options]         Scan source files for hardcoded strings
 
 Arguments:
   locales-dir              Path to locale files (default: ./locales)
@@ -38,6 +40,11 @@ Coverage Options:
   --threshold <number>     Minimum coverage % to pass (default: 0)
   --verbose                Show missing keys per namespace
 
+Scan Options:
+  --ext <extensions>       File extensions to scan (default: tsx,ts,jsx,js)
+  --threshold <number>     Max hardcoded strings allowed (default: 0, exit 1 if exceeded)
+  --verbose                Show all hardcoded strings per file
+
 General:
   --help, -h               Show this help
   --version, -v            Show version
@@ -47,6 +54,8 @@ Examples:
   npx langlens ./src/locales --port 3456
   npx langlens coverage ./src/locales --target fr --threshold 90
   npx langlens coverage ./src/locales --target he --verbose
+  npx langlens scan ./src --verbose
+  npx langlens scan ./src --ext tsx --threshold 0
 
 Environment Variables:
   LANGLENS_LOCALES_DIR     Locales directory
@@ -56,7 +65,7 @@ Environment Variables:
 // ─── Argument Parsing ───────────────────────────────────────
 
 interface CliArgs {
-  command: 'serve' | 'coverage'
+  command: 'serve' | 'coverage' | 'scan'
   localesDir: string
   port: number
   sourceLang: string
@@ -66,11 +75,12 @@ interface CliArgs {
   help: boolean
   version: boolean
   framework?: FrameworkInfo
+  scanExtensions?: string[]
 }
 
 function parseArgs(argv: string[]): CliArgs {
   const raw = argv.slice(2)
-  let command: 'serve' | 'coverage' = 'serve'
+  let command: 'serve' | 'coverage' | 'scan' = 'serve'
   let localesDir = process.env.LANGLENS_LOCALES_DIR || './locales'
   let port = parseInt(process.env.LANGLENS_PORT || String(DEFAULT_PORT), 10)
   let sourceLang = 'en'
@@ -80,10 +90,15 @@ function parseArgs(argv: string[]): CliArgs {
   let help = false
   let version = false
 
-  // Check if first arg is "coverage" subcommand
+  let scanExtensions: string[] | undefined
+
+  // Check if first arg is a subcommand
   const args = [...raw]
   if (args[0] === 'coverage') {
     command = 'coverage'
+    args.shift()
+  } else if (args[0] === 'scan') {
+    command = 'scan'
     args.shift()
   }
 
@@ -123,6 +138,12 @@ function parseArgs(argv: string[]): CliArgs {
       continue
     }
 
+    if (arg === '--ext') {
+      const next = args[++i]
+      if (next) scanExtensions = next.split(',').map((e) => e.trim())
+      continue
+    }
+
     if (arg === '--threshold') {
       const next = args[++i]
       if (!next || Number.isNaN(parseInt(next, 10))) {
@@ -153,6 +174,7 @@ function parseArgs(argv: string[]): CliArgs {
     verbose,
     help,
     version,
+    scanExtensions,
   }
 }
 
@@ -209,6 +231,22 @@ async function runCoverage(args: CliArgs): Promise<void> {
   }
 }
 
+async function runScan(args: CliArgs): Promise<void> {
+  const srcDir = args.localesDir // reuse the positional arg as src dir
+  await validateLocalesDir(srcDir)
+
+  const summary = await scanSourceFiles(srcDir, args.scanExtensions)
+  const report = formatScanReport(summary, args.verbose)
+  console.log(report)
+
+  if (args.threshold > 0 && summary.totalHardcoded > args.threshold) {
+    console.error(
+      `Found ${summary.totalHardcoded} hardcoded strings (threshold: ${args.threshold})`,
+    )
+    process.exit(1)
+  }
+}
+
 // ─── Main ───────────────────────────────────────────────────
 
 function hasUserArgs(argv: string[]): boolean {
@@ -230,6 +268,11 @@ async function main(): Promise<void> {
 
   if (args.command === 'coverage') {
     await runCoverage(args)
+    return
+  }
+
+  if (args.command === 'scan') {
+    await runScan(args)
     return
   }
 

@@ -644,9 +644,6 @@ function addTextToFound(text, element, found, seenHardcoded) {
 function showScanner() {
   hideScanner()
 
-  // Start observing DOM changes for SPA navigation
-  if (window.__langlensObserver) window.__langlensObserver.start()
-
   scannerPanel = document.createElement('div')
   scannerPanel.className = 'le-scanner'
 
@@ -654,6 +651,11 @@ function showScanner() {
   const header = createEl('div', 'le-scanner-header')
   const headerLeft = createEl('div', 'le-scanner-header-left')
   headerLeft.appendChild(createEl('div', 'le-scanner-title', 'Page Strings'))
+
+  // Current page URL indicator
+  const pageUrlEl = createEl('div', 'le-scanner-page-url', location.pathname)
+  pageUrlEl.title = location.href
+  headerLeft.appendChild(pageUrlEl)
 
   // Language switcher
   const langSwitcher = createEl('div', 'le-scanner-lang-switcher')
@@ -696,6 +698,13 @@ function showScanner() {
 
   // Header actions (export/import + close)
   const headerActions = createEl('div', 'le-scanner-header-actions')
+
+  const rescanBtn = createEl('button', 'le-scanner-action-btn le-scanner-rescan-btn', 'Rescan')
+  rescanBtn.title = 'Rescan page for strings'
+  rescanBtn.addEventListener('click', () => {
+    if (_rescan) _rescan()
+  })
+  headerActions.appendChild(rescanBtn)
 
   const exportBtn = createEl('button', 'le-scanner-action-btn', 'Export')
   exportBtn.title = 'Export missing/all strings as JSON'
@@ -902,6 +911,9 @@ function showScanner() {
 
   function renderList() {
     listContainer.replaceChildren()
+    // Update page URL indicator
+    pageUrlEl.textContent = location.pathname
+    pageUrlEl.title = location.href
     const query = searchInput.value.toLowerCase()
 
     let items = scannedItems
@@ -1188,6 +1200,7 @@ function showScanner() {
 
   computeStats()
   renderList()
+  startScannerObserver()
 }
 
 function refreshScanner() {
@@ -1314,13 +1327,21 @@ function importStrings() {
   input.click()
 }
 
-function hideScanner() {
-  // Stop observing DOM changes
-  if (window.__langlensObserver) window.__langlensObserver.stop()
+let scannerObserver = null
+let rescanDebounceTimer = null
 
+function hideScanner() {
   if (groupDropdownClickHandler) {
     document.removeEventListener('click', groupDropdownClickHandler)
     groupDropdownClickHandler = null
+  }
+  if (scannerObserver) {
+    scannerObserver.disconnect()
+    scannerObserver = null
+  }
+  if (rescanDebounceTimer) {
+    clearTimeout(rescanDebounceTimer)
+    rescanDebounceTimer = null
   }
   if (scannerPanel) {
     scannerPanel.remove()
@@ -1328,6 +1349,24 @@ function hideScanner() {
   }
   _renderList = null
   _rescan = null
+}
+
+function startScannerObserver() {
+  if (scannerObserver) scannerObserver.disconnect()
+
+  scannerObserver = new MutationObserver(() => {
+    if (!_rescan) return
+    if (rescanDebounceTimer) clearTimeout(rescanDebounceTimer)
+    rescanDebounceTimer = setTimeout(() => {
+      if (_rescan) _rescan()
+    }, 500)
+  })
+
+  scannerObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  })
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1348,8 +1387,14 @@ function setMode(mode) {
     hideModeBanner()
   }
 
-  // Toggle off if same mode
+  // Same mode: toggle off for edit, rescan for scan
   if (activeMode === mode) {
+    if (mode === MODES.SCAN) {
+      // Rescan the page instead of closing
+      showScanner()
+      showModeBanner('Scanner \u2014 all page strings listed')
+      return
+    }
     activeMode = null
     updateToggleUI()
     chrome.storage.session.set({ leMode: null })
@@ -1480,71 +1525,32 @@ async function init() {
   })
 
   // ─── SPA navigation detection ──────────────────────────────
-  // Re-scan page strings when URL changes or DOM changes significantly
+  // Inject nav-detect.js into the page's MAIN world via <script src>.
+  // It intercepts pushState/replaceState and fires 'langlens:nav' events.
+  const navScript = document.createElement('script')
+  navScript.src = chrome.runtime.getURL('nav-detect.js')
+  document.documentElement.appendChild(navScript)
+  navScript.onload = () => navScript.remove()
 
   let lastUrl = location.href
-  let navDebounceTimer = null
+  let rescanTimer = null
 
-  function onNavigation() {
-    const currentUrl = location.href
-    if (currentUrl === lastUrl) return
-    lastUrl = currentUrl
-    console.log(`[LangLens] Navigation detected → ${currentUrl}`)
-    scheduleRescan()
-  }
-
-  function scheduleRescan() {
-    if (navDebounceTimer) clearTimeout(navDebounceTimer)
-    navDebounceTimer = setTimeout(() => {
+  function onSpaNavigation() {
+    if (location.href === lastUrl) return
+    lastUrl = location.href
+    console.log(`[LangLens] Navigation detected → ${location.href}`)
+    // Wait for new page to finish rendering, then rescan
+    if (rescanTimer) clearTimeout(rescanTimer)
+    rescanTimer = setTimeout(() => {
       if (scannerPanel) refreshScanner()
-    }, 600)
-  }
-
-  // Intercept history.pushState and history.replaceState (guard against double-patching)
-  if (!history.pushState.__langlens) {
-    const origPushState = history.pushState.bind(history)
-    const origReplaceState = history.replaceState.bind(history)
-
-    history.pushState = (...args) => {
-      origPushState(...args)
-      onNavigation()
-    }
-    history.pushState.__langlens = true
-
-    history.replaceState = (...args) => {
-      origReplaceState(...args)
-      onNavigation()
-    }
-    history.replaceState.__langlens = true
-  }
-
-  // Back/forward button
-  window.addEventListener('popstate', onNavigation)
-
-  // MutationObserver — only active when scanner is open to avoid unnecessary overhead
-  let mutationDebounceTimer = null
-  const spaObserver = new MutationObserver(() => {
-    // Check if URL changed (some routers update DOM before pushState)
-    if (location.href !== lastUrl) {
-      lastUrl = location.href
-      console.log(`[LangLens] Navigation detected (DOM) → ${location.href}`)
-    }
-    if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
-    mutationDebounceTimer = setTimeout(() => {
-      refreshScanner()
     }, 800)
-  })
-
-  // Expose observer start/stop for scanner lifecycle
-  window.__langlensObserver = {
-    start() {
-      spaObserver.observe(document.body, { childList: true, subtree: true })
-    },
-    stop() {
-      spaObserver.disconnect()
-      if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
-    },
   }
+
+  // Listen for pushState/replaceState events from nav-detect.js
+  window.addEventListener('langlens:nav', onSpaNavigation)
+
+  // Also catch back/forward button
+  window.addEventListener('popstate', onSpaNavigation)
 
   console.log('[LangLens] Ready!', leMode ? `(${leMode} mode restored)` : '')
 }
