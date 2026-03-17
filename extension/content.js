@@ -1474,18 +1474,24 @@ async function init() {
   })
 
   // ─── SPA navigation detection ──────────────────────────────
-  // Re-scan page strings when the URL changes without a full reload
+  // Re-scan page strings when URL changes or DOM changes significantly
 
   let lastUrl = location.href
+  let navDebounceTimer = null
 
   function onNavigation() {
-    if (location.href === lastUrl) return
-    lastUrl = location.href
-    console.log(`[LangLens] Navigation detected → ${location.href}`)
-    // Wait for DOM to settle after route change
-    setTimeout(() => {
+    const currentUrl = location.href
+    if (currentUrl === lastUrl) return
+    lastUrl = currentUrl
+    console.log(`[LangLens] Navigation detected → ${currentUrl}`)
+    scheduleRescan()
+  }
+
+  function scheduleRescan() {
+    if (navDebounceTimer) clearTimeout(navDebounceTimer)
+    navDebounceTimer = setTimeout(() => {
       if (scannerPanel) refreshScanner()
-    }, 300)
+    }, 600)
   }
 
   // Intercept history.pushState and history.replaceState
@@ -1503,6 +1509,28 @@ async function init() {
 
   // Back/forward button
   window.addEventListener('popstate', onNavigation)
+
+  // MutationObserver — catches DOM changes after SPA route transitions
+  let mutationDebounceTimer = null
+  const observer = new MutationObserver(() => {
+    // Check if URL changed (some routers update DOM before pushState)
+    if (location.href !== lastUrl) {
+      lastUrl = location.href
+      console.log(`[LangLens] Navigation detected (DOM) → ${location.href}`)
+    }
+    // Debounce DOM mutations — rescan after DOM settles
+    if (scannerPanel) {
+      if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
+      mutationDebounceTimer = setTimeout(() => {
+        refreshScanner()
+      }, 800)
+    }
+  })
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  })
 
   console.log('[LangLens] Ready!', leMode ? `(${leMode} mode restored)` : '')
 }
