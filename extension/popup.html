@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px;
+      color: #18181b;
+      background: #fff;
+    }
+
+    .header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid #f0f0f2;
+    }
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .header p {
+      font-size: 11px;
+      color: #71717a;
+      margin-top: 2px;
+    }
+
+    .section {
+      padding: 14px 18px;
+      border-bottom: 1px solid #f0f0f2;
+    }
+    .section-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #a1a1aa;
+      margin-bottom: 10px;
+    }
+
+    .field {
+      margin-bottom: 10px;
+    }
+    .field:last-child {
+      margin-bottom: 0;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #3f3f46;
+      margin-bottom: 4px;
+    }
+    .field input, .field select {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1px solid #e4e4e7;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: inherit;
+      color: #18181b;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field input:focus, .field select:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      background: #fff;
+    }
+    .field .hint {
+      font-size: 10px;
+      color: #a1a1aa;
+      margin-top: 3px;
+    }
+
+    .actions {
+      padding: 14px 18px;
+    }
+    .btn-save {
+      width: 100%;
+      padding: 8px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-save:hover {
+      background: #4338ca;
+    }
+    .btn-save:active {
+      transform: scale(0.98);
+    }
+
+    .status {
+      text-align: center;
+      font-size: 11px;
+      margin-top: 8px;
+      min-height: 16px;
+    }
+    .status-ok { color: #059669; }
+    .status-err { color: #dc2626; }
+
+    .lang-row {
+      display: flex;
+      gap: 8px;
+    }
+    .lang-row .field {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>LangLens</h1>
+    <p>See and edit translations on your running app</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Connection</div>
+    <div class="field">
+      <label for="backendUrl">Backend URL</label>
+      <input type="text" id="backendUrl" placeholder="http://localhost:5567" />
+      <div class="hint">The LangLens server that reads your locale files</div>
+    </div>
+    <div class="field">
+      <label for="appUrl">App URL</label>
+      <input type="text" id="appUrl" placeholder="http://localhost:5555" />
+      <div class="hint">Only activate on pages matching this URL</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Languages</div>
+    <div class="lang-row">
+      <div class="field">
+        <label for="sourceLang">Source</label>
+        <input type="text" id="sourceLang" placeholder="en" />
+      </div>
+      <div class="field">
+        <label for="targetLang">Target</label>
+        <input type="text" id="targetLang" placeholder="he" />
+      </div>
+    </div>
+    <div class="hint">Source is read-only by default. Target is what you edit.</div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-save" id="saveBtn">Save Settings</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="defaults.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

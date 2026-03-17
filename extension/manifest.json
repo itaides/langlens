@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "LangLens",
+  "version": "1.0.0",
+  "description": "See and edit translations directly on your running app",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+  "content_scripts": [
+    {
+      "matches": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}

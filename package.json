@@ -1,0 +1,37 @@
+{
+  "name": "langlens",
+  "version": "1.0.0",
+  "description": "See and edit translations directly on your running app",
+  "keywords": ["i18n", "translation", "chrome-extension", "localization", "i18next", "react-intl"],
+  "license": "MIT",
+  "author": "LangLens",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itaides/langlens"
+  },
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "bin": {
+    "langlens": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "extension",
+    "README.md",
+    "ROADMAP.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "dev": "tsc && node dist/cli.js",
+    "prepublishOnly": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.8.3"
+  }
+}
