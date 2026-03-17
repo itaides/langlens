@@ -50,6 +50,9 @@ export function flattenJson(obj: Record<string, unknown>, prefix = ''): Record<s
 
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       Object.assign(result, flattenJson(value as Record<string, unknown>, fullKey))
+    } else if (Array.isArray(value)) {
+      // Preserve arrays as JSON to avoid data corruption
+      result[fullKey] = JSON.stringify(value)
     } else {
       result[fullKey] = String(value ?? '')
     }

@@ -44,6 +44,9 @@ function flattenJson(obj, prefix = '') {
     const fullKey = prefix ? `${prefix}.${key}` : key
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
       Object.assign(result, flattenJson(value, fullKey))
+    } else if (Array.isArray(value)) {
+      // Preserve arrays as JSON to avoid data corruption
+      result[fullKey] = JSON.stringify(value)
     } else {
       result[fullKey] = String(value ?? '')
     }
@@ -60,7 +63,12 @@ function unflattenJson(flat) {
       if (!(parts[i] in current)) current[parts[i]] = {}
       current = current[parts[i]]
     }
-    current[parts[parts.length - 1]] = value
+    // Restore JSON arrays that were preserved during flattening
+    let finalValue = value
+    if (typeof value === 'string' && value.startsWith('[')) {
+      try { finalValue = JSON.parse(value) } catch (_) { /* keep as string */ }
+    }
+    current[parts[parts.length - 1]] = finalValue
   }
   return result
 }
