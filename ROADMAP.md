@@ -65,15 +65,40 @@
 - [x] Path traversal protection on namespace/language parameters
 - [x] CORS restricted to chrome-extension:// and localhost origins
 
-## Ideas (Unscheduled)
-- [ ] Publish to npm registry (`npx langlens ./locales` — zero config for users)
-- [ ] Firefox extension
-- [ ] Chrome Web Store publishing
-- [ ] VS Code / Zed extension (show translation status inline)
-- [ ] Translation memory — reuse translations for similar strings
+## Up Next: Quality & Validation
+- [ ] Translation QA checks (missing placeholders, inconsistent punctuation, too-long translations)
+- [ ] Character/word count limits per key (flag translations that exceed UI space)
+- [ ] Detect untranslated keys across all namespaces (not just current page)
+- [ ] Plural form detection and editing
 - [ ] Glossary — enforce consistent terminology across translations
-- [ ] RTL preview toggle — switch page direction without changing language
-- [ ] Screenshot capture — save context screenshots with translation keys
+
+## Up Next: AI & Automation
+- [ ] Batch AI translate — translate all missing strings in one click
+- [ ] AI-powered QA — detect translations that don't match context
+- [ ] Translation memory — reuse translations for similar strings
+- [ ] Auto-detect language from file content (not just filename)
+
+## Up Next: Developer Workflow
+- [ ] Git diff view — show which translations changed since last commit
+- [ ] Watch mode — auto-reload when locale files change on disk
+- [ ] Key usage search — find where a key is used in your codebase
 - [ ] Webhook on save — trigger CI, notify Slack, etc.
 - [ ] Show which React component renders each string (via data attributes)
-- [ ] Plural form detection and editing
+
+## Up Next: Collaboration
+- [ ] Comments/notes on translations (stored in a local sidecar file)
+- [ ] Translation review mode — mark strings as approved/needs-review
+- [ ] Export as CSV/XLSX for non-technical translators
+- [ ] Screenshot capture — save context screenshots with translation keys
+
+## Up Next: Format Support
+- [ ] YAML locale files (Ruby on Rails, etc.)
+- [ ] .po/.pot files (gettext)
+- [ ] .xliff files
+
+## Up Next: Distribution
+- [ ] Publish to npm registry (`npx langlens ./locales` — zero config for users)
+- [ ] Chrome Web Store publishing
+- [ ] Firefox extension
+- [ ] VS Code / Zed extension (show translation status inline)
+- [ ] RTL preview toggle — switch page direction without changing language
