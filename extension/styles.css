@@ -9,8 +9,8 @@
 
 /* ─── CSS Variables ─────────────────────────────────── */
 :root {
-  --le-font: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --le-mono: 'JetBrains Mono', 'SF Mono', monospace;
+  --le-font: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --le-mono: "JetBrains Mono", "SF Mono", monospace;
   --le-bg: rgba(255, 255, 255, 0.92);
   --le-bg-solid: #fff;
   --le-surface: #f8f8fa;
@@ -30,7 +30,9 @@
   --le-radius: 14px;
   --le-radius-sm: 8px;
   --le-radius-xs: 6px;
-  --le-shadow: 0 24px 80px rgba(0, 0, 0, 0.12), 0 8px 32px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--le-border);
+  --le-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.12), 0 8px 32px rgba(0, 0, 0, 0.06),
+    0 0 0 1px var(--le-border);
   --le-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 0 1px var(--le-border);
 }
 
@@ -143,7 +145,7 @@
     gap: 6px;
 
     &::before {
-      content: '';
+      content: "";
       display: block;
       width: 3px;
       height: 3px;
@@ -176,7 +178,10 @@
     background: var(--le-bg-solid);
     color: var(--le-text);
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.15s ease;
     box-sizing: border-box;
     line-height: 1.6;
 
@@ -241,7 +246,8 @@
     &:hover {
       background: #4338ca;
       border-color: #4338ca;
-      box-shadow: 0 2px 8px color-mix(in srgb, var(--le-accent) 30%, transparent);
+      box-shadow: 0 2px 8px
+        color-mix(in srgb, var(--le-accent) 30%, transparent);
     }
 
     &:active {
@@ -297,7 +303,9 @@
     font-family: var(--le-font);
     letter-spacing: 0.02em;
     cursor: pointer;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 0 0 1px color-mix(in srgb, #fff 5%, transparent) inset;
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.2),
+      0 0 0 1px color-mix(in srgb, #fff 5%, transparent) inset;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -329,7 +337,9 @@
 
     &.le-active {
       background: var(--le-accent);
-      box-shadow: 0 4px 24px color-mix(in srgb, var(--le-accent) 35%, transparent), 0 0 0 1px color-mix(in srgb, #fff 10%, transparent) inset;
+      box-shadow:
+        0 4px 24px color-mix(in srgb, var(--le-accent) 35%, transparent),
+        0 0 0 1px color-mix(in srgb, #fff 10%, transparent) inset;
 
       .le-toggle-dot {
         background: #86efac;
@@ -478,6 +488,16 @@
     font-size: 15px;
     font-weight: 600;
     letter-spacing: -0.01em;
+  }
+
+  .le-scanner-page-url {
+    font-size: 10px;
+    color: var(--le-muted);
+    font-family: monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
   }
 
   .le-scanner-header-actions {
@@ -637,7 +657,9 @@
     outline: none;
     box-sizing: border-box;
     min-width: 0;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
 
     &:focus {
       border-color: var(--le-accent);
@@ -827,7 +849,9 @@
     color: var(--le-text);
     outline: none;
     min-width: 0;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition:
+      border-color 0.15s,
+      box-shadow 0.15s;
     box-sizing: border-box;
 
     &:focus {
@@ -994,8 +1018,12 @@
   }
 
   @keyframes le-fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes le-status-in {
@@ -1021,8 +1049,13 @@
   }
 
   @keyframes le-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
   }
 
   @keyframes le-confetti-burst {
@@ -1047,9 +1080,15 @@
   }
 
   @keyframes le-toggle-bounce {
-    0% { transform: scale(1); }
-    40% { transform: scale(1.08); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1);
+    }
+    40% {
+      transform: scale(1.08);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 
   @keyframes le-slide-down-out {
@@ -1060,13 +1099,21 @@
   }
 
   @keyframes le-highlight-shimmer {
-    from { outline-color: var(--le-accent); }
-    to { outline-color: #818cf8; }
+    from {
+      outline-color: var(--le-accent);
+    }
+    to {
+      outline-color: #818cf8;
+    }
   }
 
   @keyframes le-highlight-hardcoded-pulse {
-    from { outline-color: var(--le-warn); }
-    to { outline-color: #fbbf24; }
+    from {
+      outline-color: var(--le-warn);
+    }
+    to {
+      outline-color: #fbbf24;
+    }
   }
 
   /* Highlight shimmer on hover */

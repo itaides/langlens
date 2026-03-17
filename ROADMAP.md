@@ -86,6 +86,7 @@
 - [ ] Show which React component renders each string (via data attributes)
 
 ## Up Next: Collaboration
+- [ ] `langlens tunnel` — expose app + server via tunnel (ngrok/cloudflare) so remote translators can edit in context
 - [ ] Comments/notes on translations (stored in a local sidecar file)
 - [ ] Translation review mode — mark strings as approved/needs-review
 - [ ] Export as CSV/XLSX for non-technical translators

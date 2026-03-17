@@ -1,16 +1,34 @@
 {
   "manifest_version": 3,
   "name": "LangLens",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "See and edit translations directly on your running app",
   "permissions": ["storage"],
-  "host_permissions": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+  "host_permissions": [
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "https://*.trycloudflare.com/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*",
+        "https://*.trycloudflare.com/*"
+      ],
       "js": ["content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["nav-detect.js"],
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*",
+        "https://*.trycloudflare.com/*"
+      ]
     }
   ],
   "action": {

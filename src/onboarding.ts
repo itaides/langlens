@@ -5,11 +5,11 @@
  * Guides the user through setup and saves a .langlensrc.json.
  */
 
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises'
+import { join, relative, resolve } from 'node:path'
 import { createInterface } from 'node:readline/promises'
-import { readdir, stat, readFile, writeFile } from 'node:fs/promises'
-import { join, resolve, relative } from 'node:path'
-import { DEFAULT_PORT } from './server.js'
 import { detectFramework, type FrameworkInfo } from './detect-framework.js'
+import { DEFAULT_PORT } from './server.js'
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -35,7 +35,7 @@ export async function loadConfig(): Promise<LanglensConfig | null> {
 }
 
 async function saveConfig(config: LanglensConfig): Promise<void> {
-  await writeFile(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n', 'utf-8')
+  await writeFile(CONFIG_FILE, `${JSON.stringify(config, null, 2)}\n`, 'utf-8')
 }
 
 // ─── Auto-detect locales directories ────────────────────────
@@ -58,7 +58,9 @@ interface DetectedDir {
   languages: string[]
 }
 
-async function detectLocalesDirs(extraPaths: string[] = []): Promise<DetectedDir[]> {
+async function detectLocalesDirs(
+  extraPaths: string[] = [],
+): Promise<DetectedDir[]> {
   const found: DetectedDir[] = []
   const allPaths = [...new Set([...extraPaths, ...COMMON_PATHS])]
 
@@ -91,7 +93,11 @@ async function detectLocalesDirs(extraPaths: string[] = []): Promise<DetectedDir
 
 // ─── Prompt helpers ─────────────────────────────────────────
 
-async function ask(rl: ReturnType<typeof createInterface>, question: string, fallback: string): Promise<string> {
+async function ask(
+  rl: ReturnType<typeof createInterface>,
+  question: string,
+  fallback: string,
+): Promise<string> {
   const answer = (await rl.question(`  ${question} [${fallback}]: `)).trim()
   return answer || fallback
 }
@@ -103,7 +109,7 @@ export async function runOnboarding(): Promise<LanglensConfig> {
 
   console.log()
   console.log('  Welcome to LangLens!')
-  console.log('  Let\'s set up your translation workflow.')
+  console.log("  Let's set up your translation workflow.")
   console.log()
   console.log('  Tip: Run your app in dev/watch mode for live updates.')
   console.log('  Translations are saved to disk — watch mode hot-reloads them.')
@@ -115,7 +121,9 @@ export async function runOnboarding(): Promise<LanglensConfig> {
 
   if (framework.name !== 'unknown') {
     console.log(`  Detected i18n framework: ${framework.name}`)
-    console.log(`  Interpolation: ${framework.interpolation.prefix}variable${framework.interpolation.suffix}`)
+    console.log(
+      `  Interpolation: ${framework.interpolation.prefix}variable${framework.interpolation.suffix}`,
+    )
     console.log()
   }
 
@@ -128,7 +136,9 @@ export async function runOnboarding(): Promise<LanglensConfig> {
   if (detected.length > 0) {
     console.log('  Found locale directories:')
     detected.forEach((d, i) => {
-      console.log(`    ${i + 1}. ./${d.path} (${d.namespaces} namespaces, ${d.languages.length} languages: ${d.languages.join(', ')})`)
+      console.log(
+        `    ${i + 1}. ./${d.path} (${d.namespaces} namespaces, ${d.languages.length} languages: ${d.languages.join(', ')})`,
+      )
     })
     console.log()
 
@@ -166,7 +176,9 @@ export async function runOnboarding(): Promise<LanglensConfig> {
     const firstNamespace = entries.find((e) => e.isDirectory())
     if (firstNamespace) {
       const files = await readdir(join(resolvedDir, firstNamespace.name))
-      availableLangs = files.filter((f) => f.endsWith('.json')).map((f) => f.replace('.json', ''))
+      availableLangs = files
+        .filter((f) => f.endsWith('.json'))
+        .map((f) => f.replace('.json', ''))
     }
   } catch {
     // couldn't read, user will type manually
@@ -179,7 +191,11 @@ export async function runOnboarding(): Promise<LanglensConfig> {
     console.log()
   }
 
-  const sourceLang = await ask(rl, 'Source language', availableLangs.includes('en') ? 'en' : availableLangs[0] || 'en')
+  const sourceLang = await ask(
+    rl,
+    'Source language',
+    availableLangs.includes('en') ? 'en' : availableLangs[0] || 'en',
+  )
 
   // ─── Target language ──────────────────────────────────────
 
@@ -191,7 +207,10 @@ export async function runOnboarding(): Promise<LanglensConfig> {
   // ─── Port ─────────────────────────────────────────────────
 
   console.log()
-  const port = parseInt(await ask(rl, 'LangLens server port', String(DEFAULT_PORT)), 10)
+  const port = parseInt(
+    await ask(rl, 'LangLens server port', String(DEFAULT_PORT)),
+    10,
+  )
 
   rl.close()
 

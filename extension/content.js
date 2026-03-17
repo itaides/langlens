@@ -8,7 +8,12 @@
 
 // Mode & filter constants
 const MODES = { EDIT: 'edit', SCAN: 'scan' }
-const FILTERS = { ALL: 'all', MISSING: 'missing', HARDCODED: 'hardcoded', TRANSLATED: 'translated' }
+const FILTERS = {
+  ALL: 'all',
+  MISSING: 'missing',
+  HARDCODED: 'hardcoded',
+  TRANSLATED: 'translated',
+}
 
 // Config (loaded from chrome.storage, with defaults)
 const DEFAULTS = {
@@ -22,8 +27,8 @@ let config = { ...DEFAULTS }
 
 // State
 let activeMode = null // null | MODES.EDIT | MODES.SCAN
-let translations = {}
-let reverseMap = new Map()
+const translations = {}
+const reverseMap = new Map()
 let availableLangs = []
 let frameworkConfig = { interpolation: { prefix: '{{', suffix: '}}' } }
 let currentOverlay = null
@@ -34,7 +39,14 @@ let toggleBtn = null
 let _renderList = null
 let _rescan = null
 let groupDropdownClickHandler = null
-let scannerStats = { total: 0, hardcoded: 0, missing: 0, translated: 0, i18nStrings: 0, coveragePct: 100 }
+let scannerStats = {
+  total: 0,
+  hardcoded: 0,
+  missing: 0,
+  translated: 0,
+  i18nStrings: 0,
+  coveragePct: 100,
+}
 
 // ─── Flatten / Unflatten ────────────────────────────────────
 
@@ -78,7 +90,9 @@ async function loadTranslations() {
       if (cfgData.framework?.interpolation) {
         frameworkConfig = cfgData.framework
       }
-    } catch (_) { /* use defaults */ }
+    } catch (_) {
+      /* use defaults */
+    }
 
     const nsRes = await fetch(`${backendUrl}/api/namespaces`)
     const namespaces = await nsRes.json()
@@ -88,7 +102,7 @@ async function loadTranslations() {
         const res = await fetch(`${backendUrl}/api/translations/${ns}`)
         const data = await res.json()
         return { ns, data }
-      })
+      }),
     )
 
     for (const { ns, data } of results) {
@@ -103,9 +117,15 @@ async function loadTranslations() {
     }
 
     buildReverseMap()
-    console.log(`[LangLens] Loaded translations (${sourceLang} → ${targetLang}), reverse map size:`, reverseMap.size)
+    console.log(
+      `[LangLens] Loaded translations (${sourceLang} → ${targetLang}), reverse map size:`,
+      reverseMap.size,
+    )
   } catch (err) {
-    console.error(`[LangLens] Failed to load translations. Is the backend running at ${backendUrl}?`, err)
+    console.error(
+      `[LangLens] Failed to load translations. Is the backend running at ${backendUrl}?`,
+      err,
+    )
   }
 }
 
@@ -118,10 +138,15 @@ function addFuzzyPattern(value, entry) {
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const escapedSuffix = suffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const pattern = escaped.replace(new RegExp(`${escapedPrefix}[^}]+${escapedSuffix}`, 'g'), '.+')
+  const pattern = escaped.replace(
+    new RegExp(`${escapedPrefix}[^}]+${escapedSuffix}`, 'g'),
+    '.+',
+  )
   try {
     fuzzyPatterns.push({ regex: new RegExp(`^${pattern}$`), match: entry })
-  } catch (_) { /* invalid regex, skip */ }
+  } catch (_) {
+    /* invalid regex, skip */
+  }
 }
 
 function buildReverseMap() {
@@ -213,7 +238,8 @@ function createEl(tag, className, textContent) {
   return el
 }
 
-const INTERACTIVE_SELECTOR = 'a, button, select, option, input, textarea, label, [role="button"], [role="menuitem"], [role="tab"], [role="switch"], [role="combobox"], [role="listbox"], [role="option"]'
+const INTERACTIVE_SELECTOR =
+  'a, button, select, option, input, textarea, label, [role="button"], [role="menuitem"], [role="tab"], [role="switch"], [role="combobox"], [role="listbox"], [role="option"]'
 
 // ─── Edit Mode Overlay ──────────────────────────────────────
 
@@ -224,19 +250,36 @@ function showOverlay(el, match) {
   const overlay = document.createElement('div')
   overlay.className = 'le-overlay'
 
-  const keyBadge = createEl('div', 'le-overlay-key', `${match.namespace}:${match.key}`)
+  const keyBadge = createEl(
+    'div',
+    'le-overlay-key',
+    `${match.namespace}:${match.key}`,
+  )
   overlay.appendChild(keyBadge)
-  if (!match.target) keyBadge.appendChild(createEl('span', 'le-missing-badge', 'Missing'))
+  if (!match.target)
+    keyBadge.appendChild(createEl('span', 'le-missing-badge', 'Missing'))
 
   const enSection = createEl('div', 'le-overlay-section')
-  enSection.appendChild(createEl('div', 'le-overlay-label', `Source (${config.sourceLang.toUpperCase()})`))
+  enSection.appendChild(
+    createEl(
+      'div',
+      'le-overlay-label',
+      `Source (${config.sourceLang.toUpperCase()})`,
+    ),
+  )
   enSection.appendChild(createEl('div', 'le-overlay-value', match.source))
   overlay.appendChild(enSection)
 
   overlay.appendChild(createEl('div', 'le-overlay-divider'))
 
   const heSection = createEl('div', 'le-overlay-section')
-  heSection.appendChild(createEl('div', 'le-overlay-label', `Target (${config.targetLang.toUpperCase()})`))
+  heSection.appendChild(
+    createEl(
+      'div',
+      'le-overlay-label',
+      `Target (${config.targetLang.toUpperCase()})`,
+    ),
+  )
 
   const input = document.createElement('input')
   input.className = 'le-overlay-input'
@@ -248,7 +291,11 @@ function showOverlay(el, match) {
 
   // AI suggest in overlay (Chrome Translator API)
   if (chromeTranslator && !match.target) {
-    const suggestBtn = createEl('button', 'le-overlay-btn le-overlay-btn-suggest', 'Suggest with AI')
+    const suggestBtn = createEl(
+      'button',
+      'le-overlay-btn le-overlay-btn-suggest',
+      'Suggest with AI',
+    )
     suggestBtn.addEventListener('click', async () => {
       suggestBtn.textContent = 'Translating...'
       const suggestion = await suggestTranslation(match.source)
@@ -274,10 +321,18 @@ function showOverlay(el, match) {
   overlay.appendChild(heSection)
 
   const actions = createEl('div', 'le-overlay-actions')
-  const cancelBtn = createEl('button', 'le-overlay-btn le-overlay-btn-cancel', 'Cancel')
+  const cancelBtn = createEl(
+    'button',
+    'le-overlay-btn le-overlay-btn-cancel',
+    'Cancel',
+  )
   cancelBtn.addEventListener('click', () => removeOverlay())
   actions.appendChild(cancelBtn)
-  const saveBtn = createEl('button', 'le-overlay-btn le-overlay-btn-save', 'Save')
+  const saveBtn = createEl(
+    'button',
+    'le-overlay-btn le-overlay-btn-save',
+    'Save',
+  )
   saveBtn.addEventListener('click', async () => {
     await saveTranslation(match.namespace, match.key, input.value, statusEl)
   })
@@ -300,7 +355,8 @@ function showOverlay(el, match) {
   input.select()
 
   input.addEventListener('keydown', async (e) => {
-    if (e.key === 'Enter') await saveTranslation(match.namespace, match.key, input.value, statusEl)
+    if (e.key === 'Enter')
+      await saveTranslation(match.namespace, match.key, input.value, statusEl)
     if (e.key === 'Escape') removeOverlay()
   })
 
@@ -329,11 +385,14 @@ async function persistTranslation(namespace, langType, key, newValue) {
   buildReverseMap()
 
   const nested = unflattenJson(translations[namespace][langType])
-  const res = await fetch(`${config.backendUrl}/api/translations/${namespace}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ [lang]: nested }),
-  })
+  const res = await fetch(
+    `${config.backendUrl}/api/translations/${namespace}`,
+    {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [lang]: nested }),
+    },
+  )
 
   return res.ok
 }
@@ -371,8 +430,22 @@ function miniConfetti(anchor) {
   const cx = rect.left + rect.width / 2
   const cy = rect.top + rect.height / 2
 
-  const colors = ['#4f46e5', '#06b6d4', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#f43f5e', '#facc15', '#34d399']
-  const shapes = ['le-confetti', 'le-confetti le-confetti-circle', 'le-confetti le-confetti-star']
+  const colors = [
+    '#4f46e5',
+    '#06b6d4',
+    '#f59e0b',
+    '#10b981',
+    '#ec4899',
+    '#8b5cf6',
+    '#f43f5e',
+    '#facc15',
+    '#34d399',
+  ]
+  const shapes = [
+    'le-confetti',
+    'le-confetti le-confetti-circle',
+    'le-confetti le-confetti-star',
+  ]
   const count = 120
 
   for (let i = 0; i < count; i++) {
@@ -402,8 +475,14 @@ function miniConfetti(anchor) {
 function onMouseOver(e) {
   if (activeMode !== MODES.EDIT || currentOverlay) return
   const el = e.target
-  if (el.closest('.le-overlay') || el.closest('.le-toggle') || el.closest('.le-scanner')) return
-  if (el.matches(INTERACTIVE_SELECTOR) || el.closest(INTERACTIVE_SELECTOR)) return
+  if (
+    el.closest('.le-overlay') ||
+    el.closest('.le-toggle') ||
+    el.closest('.le-scanner')
+  )
+    return
+  if (el.matches(INTERACTIVE_SELECTOR) || el.closest(INTERACTIVE_SELECTOR))
+    return
 
   const match = findTranslationForElement(el)
   if (match) {
@@ -422,8 +501,14 @@ function onMouseOut(e) {
 function onClick(e) {
   if (activeMode !== MODES.EDIT) return
   const el = e.target
-  if (el.closest('.le-overlay') || el.closest('.le-toggle') || el.closest('.le-scanner')) return
-  if (el.matches(INTERACTIVE_SELECTOR) || el.closest(INTERACTIVE_SELECTOR)) return
+  if (
+    el.closest('.le-overlay') ||
+    el.closest('.le-toggle') ||
+    el.closest('.le-scanner')
+  )
+    return
+  if (el.matches(INTERACTIVE_SELECTOR) || el.closest(INTERACTIVE_SELECTOR))
+    return
 
   const match = findTranslationForElement(el)
   if (match) {
@@ -448,8 +533,19 @@ document.addEventListener('keydown', (e) => {
 // ═══════════════════════════════════════════════════════════════
 
 // Strings that are clearly not translatable content
-const SKIP_PATTERNS = /^[\d\s.,;:!?@#$%^&*()\-+=<>{}[\]|/\\'"~`]+$|^https?:|^\d+$/
-const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'SVG', 'PATH', 'CODE', 'PRE', 'NOSCRIPT', 'LINK', 'META'])
+const SKIP_PATTERNS =
+  /^[\d\s.,;:!?@#$%^&*()\-+=<>{}[\]|/\\'"~`]+$|^https?:|^\d+$/
+const SKIP_TAGS = new Set([
+  'SCRIPT',
+  'STYLE',
+  'SVG',
+  'PATH',
+  'CODE',
+  'PRE',
+  'NOSCRIPT',
+  'LINK',
+  'META',
+])
 
 function isLikelyHumanText(text) {
   if (text.length <= 2) return false
@@ -470,32 +566,40 @@ function scanPageStrings() {
     {
       acceptNode(node) {
         if (SKIP_TAGS.has(node.tagName)) return NodeFilter.FILTER_REJECT
-        if (node.closest('.le-scanner') || node.closest('.le-toggle') || node.closest('.le-overlay') || node.closest('.le-mode-banner')) {
+        if (
+          node.closest('.le-scanner') ||
+          node.closest('.le-toggle') ||
+          node.closest('.le-overlay') ||
+          node.closest('.le-mode-banner')
+        ) {
           return NodeFilter.FILTER_REJECT
         }
         return NodeFilter.FILTER_ACCEPT
       },
-    }
+    },
   )
 
-  let node
-  while ((node = walker.nextNode())) {
+  let node = walker.nextNode()
+  while (node) {
     const ownText = getOwnText(node)
-    if (!ownText || ownText.length <= 1) continue
+    if (ownText && ownText.length > 1) {
+      addTextToFound(ownText, node, found, seenHardcoded)
 
-    addTextToFound(ownText, node, found, seenHardcoded)
-
-    // Scan translatable attributes
-    for (const attr of TRANSLATABLE_ATTRS) {
-      const attrVal = node.getAttribute(attr)
-      if (attrVal && attrVal.length > 1) {
-        addTextToFound(attrVal, node, found, seenHardcoded)
+      // Scan translatable attributes
+      for (const attr of TRANSLATABLE_ATTRS) {
+        const attrVal = node.getAttribute(attr)
+        if (attrVal && attrVal.length > 1) {
+          addTextToFound(attrVal, node, found, seenHardcoded)
+        }
       }
     }
+    node = walker.nextNode()
   }
 
   // Also check textContent of elements (catches composed text)
-  const allEls = document.body.querySelectorAll('*:not(.le-scanner):not(.le-scanner *):not(.le-toggle):not(.le-overlay):not(.le-overlay *):not(.le-mode-banner)')
+  const allEls = document.body.querySelectorAll(
+    '*:not(.le-scanner):not(.le-scanner *):not(.le-toggle):not(.le-overlay):not(.le-overlay *):not(.le-mode-banner)',
+  )
   for (const el of allEls) {
     if (SKIP_TAGS.has(el.tagName)) continue
     const text = el.textContent?.trim()
@@ -548,9 +652,18 @@ function showScanner() {
   const headerLeft = createEl('div', 'le-scanner-header-left')
   headerLeft.appendChild(createEl('div', 'le-scanner-title', 'Page Strings'))
 
+  // Current page URL indicator
+  const pageUrlEl = createEl('div', 'le-scanner-page-url', location.pathname)
+  pageUrlEl.title = location.href
+  headerLeft.appendChild(pageUrlEl)
+
   // Language switcher
   const langSwitcher = createEl('div', 'le-scanner-lang-switcher')
-  const langLabel = createEl('span', 'le-scanner-lang-label', `${config.sourceLang.toUpperCase()} \u2192`)
+  const langLabel = createEl(
+    'span',
+    'le-scanner-lang-label',
+    `${config.sourceLang.toUpperCase()} \u2192`,
+  )
   langSwitcher.appendChild(langLabel)
 
   const langSelect = document.createElement('select')
@@ -586,9 +699,22 @@ function showScanner() {
   // Header actions (export/import + close)
   const headerActions = createEl('div', 'le-scanner-header-actions')
 
+  const rescanBtn = createEl(
+    'button',
+    'le-scanner-action-btn le-scanner-rescan-btn',
+    'Rescan',
+  )
+  rescanBtn.title = 'Rescan page for strings'
+  rescanBtn.addEventListener('click', () => {
+    if (_rescan) _rescan()
+  })
+  headerActions.appendChild(rescanBtn)
+
   const exportBtn = createEl('button', 'le-scanner-action-btn', 'Export')
   exportBtn.title = 'Export missing/all strings as JSON'
-  exportBtn.addEventListener('click', () => exportStrings(scannedItems, activeFilter))
+  exportBtn.addEventListener('click', () =>
+    exportStrings(scannedItems, activeFilter),
+  )
   headerActions.appendChild(exportBtn)
 
   const importBtn = createEl('button', 'le-scanner-action-btn', 'Import')
@@ -609,16 +735,27 @@ function showScanner() {
 
   // Filter bar
   const filterBar = createEl('div', 'le-scanner-filters')
-  const filters = [FILTERS.ALL, FILTERS.MISSING, FILTERS.HARDCODED, FILTERS.TRANSLATED]
+  const filters = [
+    FILTERS.ALL,
+    FILTERS.MISSING,
+    FILTERS.HARDCODED,
+    FILTERS.TRANSLATED,
+  ]
   let activeFilter = FILTERS.ALL
 
   for (const f of filters) {
-    const btn = createEl('button', 'le-scanner-filter-btn', f.charAt(0).toUpperCase() + f.slice(1))
+    const btn = createEl(
+      'button',
+      'le-scanner-filter-btn',
+      f.charAt(0).toUpperCase() + f.slice(1),
+    )
     if (f === FILTERS.ALL) btn.classList.add('le-scanner-filter-active')
     btn.dataset.filter = f
     btn.addEventListener('click', () => {
       activeFilter = f
-      filterBar.querySelectorAll('.le-scanner-filter-btn').forEach((b) => b.classList.remove('le-scanner-filter-active'))
+      for (const b of filterBar.querySelectorAll('.le-scanner-filter-btn')) {
+        b.classList.remove('le-scanner-filter-active')
+      }
       btn.classList.add('le-scanner-filter-active')
       renderList()
     })
@@ -645,7 +782,7 @@ function showScanner() {
   const groupBtn = createEl('button', 'le-scanner-group-btn', 'Groups')
   const groupDropdown = createEl('div', 'le-scanner-group-dropdown')
   groupDropdown.style.display = 'none'
-  let selectedGroups = new Set() // empty = all
+  const selectedGroups = new Set() // empty = all
 
   groupBtn.addEventListener('click', (e) => {
     e.stopPropagation()
@@ -711,7 +848,9 @@ function showScanner() {
     groupDropdown.appendChild(createEl('div', 'le-scanner-group-divider'))
 
     // Each group
-    const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
+    const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) =>
+      a.localeCompare(b),
+    )
     for (const [group, count] of sortedGroups) {
       const row = createEl('label', 'le-scanner-group-option')
       const cb = document.createElement('input')
@@ -757,22 +896,38 @@ function showScanner() {
   function computeStats() {
     const total = scannedItems.length
     const hardcoded = scannedItems.filter((i) => i.hardcoded).length
-    const missing = scannedItems.filter((i) => !i.hardcoded && !i.match.target).length
+    const missing = scannedItems.filter(
+      (i) => !i.hardcoded && !i.match.target,
+    ).length
     const translated = total - missing - hardcoded
     const i18nStrings = total - hardcoded
-    const coveragePct = i18nStrings > 0 ? Math.round((translated / i18nStrings) * 100) : 100
-    scannerStats = { total, hardcoded, missing, translated, i18nStrings, coveragePct }
+    const coveragePct =
+      i18nStrings > 0 ? Math.round((translated / i18nStrings) * 100) : 100
+    scannerStats = {
+      total,
+      hardcoded,
+      missing,
+      translated,
+      i18nStrings,
+      coveragePct,
+    }
   }
 
   function renderList() {
     listContainer.replaceChildren()
+    // Update page URL indicator
+    pageUrlEl.textContent = location.pathname
+    pageUrlEl.title = location.href
     const query = searchInput.value.toLowerCase()
 
     let items = scannedItems
     if (activeFilter === FILTERS.MISSING) {
       items = items.filter((i) => !i.hardcoded && !i.match.target)
     } else if (activeFilter === FILTERS.TRANSLATED) {
-      items = items.filter((i) => !i.hardcoded && i.match.target && i.match.target !== i.match.source)
+      items = items.filter(
+        (i) =>
+          !i.hardcoded && i.match.target && i.match.target !== i.match.source,
+      )
     } else if (activeFilter === FILTERS.HARDCODED) {
       items = items.filter((i) => i.hardcoded)
     }
@@ -783,10 +938,11 @@ function showScanner() {
     }
 
     if (query) {
-      items = items.filter((i) =>
-        i.match.key.toLowerCase().includes(query) ||
-        i.match.source.toLowerCase().includes(query) ||
-        i.match.target.toLowerCase().includes(query)
+      items = items.filter(
+        (i) =>
+          i.match.key.toLowerCase().includes(query) ||
+          i.match.source.toLowerCase().includes(query) ||
+          i.match.target?.toLowerCase().includes(query),
       )
     }
 
@@ -800,20 +956,49 @@ function showScanner() {
     // Render pre-computed stats
     const { total, hardcoded, missing, translated, coveragePct } = scannerStats
     statsBar.textContent = ''
-    statsBar.appendChild(createEl('span', 'le-scanner-stat le-scanner-stat-coverage', `${coveragePct}%`))
-    statsBar.appendChild(createEl('span', 'le-scanner-stat', `${total} strings`))
-    statsBar.appendChild(createEl('span', 'le-scanner-stat le-scanner-stat-ok', `${translated} translated`))
+    statsBar.appendChild(
+      createEl(
+        'span',
+        'le-scanner-stat le-scanner-stat-coverage',
+        `${coveragePct}%`,
+      ),
+    )
+    statsBar.appendChild(
+      createEl('span', 'le-scanner-stat', `${total} strings`),
+    )
+    statsBar.appendChild(
+      createEl(
+        'span',
+        'le-scanner-stat le-scanner-stat-ok',
+        `${translated} translated`,
+      ),
+    )
     if (missing > 0) {
-      statsBar.appendChild(createEl('span', 'le-scanner-stat le-scanner-stat-miss', `${missing} missing`))
+      statsBar.appendChild(
+        createEl(
+          'span',
+          'le-scanner-stat le-scanner-stat-miss',
+          `${missing} missing`,
+        ),
+      )
     }
     if (hardcoded > 0) {
-      statsBar.appendChild(createEl('span', 'le-scanner-stat le-scanner-stat-hard', `${hardcoded} hardcoded`))
+      statsBar.appendChild(
+        createEl(
+          'span',
+          'le-scanner-stat le-scanner-stat-hard',
+          `${hardcoded} hardcoded`,
+        ),
+      )
     }
 
     if (items.length === 0) {
-      const emptyMsg = activeFilter === FILTERS.MISSING ? 'No missing strings on this page!'
-        : activeFilter === FILTERS.HARDCODED ? 'No hardcoded strings detected!'
-        : 'No matches'
+      const emptyMsg =
+        activeFilter === FILTERS.MISSING
+          ? 'No missing strings on this page!'
+          : activeFilter === FILTERS.HARDCODED
+            ? 'No hardcoded strings detected!'
+            : 'No matches'
       listContainer.appendChild(createEl('div', 'le-scanner-empty', emptyMsg))
       return
     }
@@ -824,13 +1009,23 @@ function showScanner() {
         const row = createEl('div', 'le-scanner-row le-scanner-row-hardcoded')
 
         const headerRow = createEl('div', 'le-scanner-row-header')
-        headerRow.appendChild(createEl('span', 'le-hardcoded-badge', 'Hardcoded'))
+        headerRow.appendChild(
+          createEl('span', 'le-hardcoded-badge', 'Hardcoded'),
+        )
         row.appendChild(headerRow)
 
-        const textEl = createEl('div', 'le-scanner-row-hardcoded-text', item.match.source)
+        const textEl = createEl(
+          'div',
+          'le-scanner-row-hardcoded-text',
+          item.match.source,
+        )
         row.appendChild(textEl)
 
-        const hintEl = createEl('div', 'le-scanner-row-hardcoded-hint', 'This string is not using t() — needs developer attention')
+        const hintEl = createEl(
+          'div',
+          'le-scanner-row-hardcoded-hint',
+          'This string is not using t() — needs developer attention',
+        )
         row.appendChild(hintEl)
 
         // Locate button
@@ -840,7 +1035,10 @@ function showScanner() {
           if (el) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' })
             el.classList.add('le-highlight-hardcoded')
-            setTimeout(() => el.classList.remove('le-highlight-hardcoded'), 2000)
+            setTimeout(
+              () => el.classList.remove('le-highlight-hardcoded'),
+              2000,
+            )
           }
         })
         row.appendChild(locateBtn)
@@ -849,16 +1047,29 @@ function showScanner() {
         continue
       }
 
-      const row = createEl('div', `le-scanner-row ${!item.match.target ? 'le-scanner-row-missing' : ''}`)
+      const row = createEl(
+        'div',
+        `le-scanner-row ${!item.match.target ? 'le-scanner-row-missing' : ''}`,
+      )
 
       // Key
       row.appendChild(createEl('div', 'le-scanner-row-key', item.match.key))
 
       // EN (double-click to edit)
       const enRow = createEl('div', 'le-scanner-row-en')
-      enRow.appendChild(createEl('span', 'le-scanner-row-lang', config.sourceLang.toUpperCase()))
+      enRow.appendChild(
+        createEl(
+          'span',
+          'le-scanner-row-lang',
+          config.sourceLang.toUpperCase(),
+        ),
+      )
 
-      const enText = createEl('span', 'le-scanner-row-en-text', item.match.source)
+      const enText = createEl(
+        'span',
+        'le-scanner-row-en-text',
+        item.match.source,
+      )
       enText.title = 'Double-click to edit source'
       enRow.appendChild(enText)
 
@@ -879,7 +1090,12 @@ function showScanner() {
         enRow.appendChild(enSaveBtn)
 
         const saveEn = async () => {
-          await saveScannerRowSource(item.match.namespace, item.match.key, enInput.value, enSaveIndicator)
+          await saveScannerRowSource(
+            item.match.namespace,
+            item.match.key,
+            enInput.value,
+            enSaveIndicator,
+          )
           item.match.source = enInput.value
         }
 
@@ -899,7 +1115,13 @@ function showScanner() {
 
       // HE editable
       const heRow = createEl('div', 'le-scanner-row-he')
-      heRow.appendChild(createEl('span', 'le-scanner-row-lang', config.targetLang.toUpperCase()))
+      heRow.appendChild(
+        createEl(
+          'span',
+          'le-scanner-row-lang',
+          config.targetLang.toUpperCase(),
+        ),
+      )
 
       const heInput = document.createElement('input')
       heInput.className = 'le-scanner-row-input'
@@ -913,13 +1135,25 @@ function showScanner() {
 
       heInput.addEventListener('keydown', async (e) => {
         if (e.key === 'Enter') {
-          await saveScannerRow(item.match.namespace, item.match.key, heInput.value, saveIndicator, row)
+          await saveScannerRow(
+            item.match.namespace,
+            item.match.key,
+            heInput.value,
+            saveIndicator,
+            row,
+          )
         }
       })
 
       const rowSaveBtn = createEl('button', 'le-scanner-row-save', 'Save')
       rowSaveBtn.addEventListener('click', async () => {
-        await saveScannerRow(item.match.namespace, item.match.key, heInput.value, saveIndicator, row)
+        await saveScannerRow(
+          item.match.namespace,
+          item.match.key,
+          heInput.value,
+          saveIndicator,
+          row,
+        )
       })
 
       heRow.appendChild(heInput)
@@ -970,6 +1204,7 @@ function showScanner() {
 
   computeStats()
   renderList()
+  startScannerObserver()
 }
 
 function refreshScanner() {
@@ -985,7 +1220,9 @@ async function saveScannerRow(namespace, key, newValue, indicator, row) {
       indicator.textContent = '\u2713'
       indicator.style.display = 'inline'
       row.classList.remove('le-scanner-row-missing')
-      setTimeout(() => { if (indicator.isConnected) indicator.style.display = 'none' }, 1500)
+      setTimeout(() => {
+        if (indicator.isConnected) indicator.style.display = 'none'
+      }, 1500)
     }
   } catch (err) {
     indicator.textContent = '\u2717'
@@ -1000,7 +1237,9 @@ async function saveScannerRowSource(namespace, key, newValue, indicator) {
     if (ok) {
       indicator.textContent = '\u2713'
       indicator.style.display = 'inline'
-      setTimeout(() => { if (indicator.isConnected) indicator.style.display = 'none' }, 1500)
+      setTimeout(() => {
+        if (indicator.isConnected) indicator.style.display = 'none'
+      }, 1500)
     }
   } catch (err) {
     indicator.textContent = '\u2717'
@@ -1027,7 +1266,9 @@ function exportStrings(items, filter) {
     hardcoded: item.hardcoded || false,
   }))
 
-  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+    type: 'application/json',
+  })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -1080,7 +1321,9 @@ function importStrings() {
 
       buildReverseMap()
       if (scannerPanel) refreshScanner()
-      console.log(`[LangLens] Imported ${importCount} translations across ${namespacesToSave.size} namespaces`)
+      console.log(
+        `[LangLens] Imported ${importCount} translations across ${namespacesToSave.size} namespaces`,
+      )
     } catch (err) {
       console.error('[LangLens] Import failed:', err)
     }
@@ -1088,10 +1331,21 @@ function importStrings() {
   input.click()
 }
 
+let scannerObserver = null
+let rescanDebounceTimer = null
+
 function hideScanner() {
   if (groupDropdownClickHandler) {
     document.removeEventListener('click', groupDropdownClickHandler)
     groupDropdownClickHandler = null
+  }
+  if (scannerObserver) {
+    scannerObserver.disconnect()
+    scannerObserver = null
+  }
+  if (rescanDebounceTimer) {
+    clearTimeout(rescanDebounceTimer)
+    rescanDebounceTimer = null
   }
   if (scannerPanel) {
     scannerPanel.remove()
@@ -1099,6 +1353,24 @@ function hideScanner() {
   }
   _renderList = null
   _rescan = null
+}
+
+function startScannerObserver() {
+  if (scannerObserver) scannerObserver.disconnect()
+
+  scannerObserver = new MutationObserver(() => {
+    if (!_rescan) return
+    if (rescanDebounceTimer) clearTimeout(rescanDebounceTimer)
+    rescanDebounceTimer = setTimeout(() => {
+      if (_rescan) _rescan()
+    }, 500)
+  })
+
+  scannerObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  })
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1119,8 +1391,14 @@ function setMode(mode) {
     hideModeBanner()
   }
 
-  // Toggle off if same mode
+  // Same mode: toggle off for edit, rescan for scan
   if (activeMode === mode) {
+    if (mode === MODES.SCAN) {
+      // Rescan the page instead of closing
+      showScanner()
+      showModeBanner('Scanner \u2014 all page strings listed')
+      return
+    }
     activeMode = null
     updateToggleUI()
     chrome.storage.session.set({ leMode: null })
@@ -1149,8 +1427,10 @@ function updateToggleUI() {
   if (!toggleBtn) return
   const editBtn = toggleBtn.querySelector(`[data-mode="${MODES.EDIT}"]`)
   const scanBtn = toggleBtn.querySelector(`[data-mode="${MODES.SCAN}"]`)
-  if (editBtn) editBtn.classList.toggle('le-toggle-mode-active', activeMode === MODES.EDIT)
-  if (scanBtn) scanBtn.classList.toggle('le-toggle-mode-active', activeMode === MODES.SCAN)
+  if (editBtn)
+    editBtn.classList.toggle('le-toggle-mode-active', activeMode === MODES.EDIT)
+  if (scanBtn)
+    scanBtn.classList.toggle('le-toggle-mode-active', activeMode === MODES.SCAN)
   toggleBtn.classList.toggle('le-active', activeMode !== null)
 }
 
@@ -1212,11 +1492,15 @@ async function init() {
 
   // Only activate on configured app URL
   if (config.appUrl && !window.location.href.startsWith(config.appUrl)) {
-    console.log(`[LangLens] Skipping — current URL doesn't match configured app URL (${config.appUrl})`)
+    console.log(
+      `[LangLens] Skipping — current URL doesn't match configured app URL (${config.appUrl})`,
+    )
     return
   }
 
-  console.log(`[LangLens] Initializing (${config.sourceLang} → ${config.targetLang})...`)
+  console.log(
+    `[LangLens] Initializing (${config.sourceLang} → ${config.targetLang})...`,
+  )
   createToggleButton()
   await loadTranslations()
 
@@ -1231,7 +1515,9 @@ async function init() {
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'sync' && changes.llConfig) {
       const newConfig = { ...DEFAULTS, ...changes.llConfig.newValue }
-      const langChanged = newConfig.sourceLang !== config.sourceLang || newConfig.targetLang !== config.targetLang
+      const langChanged =
+        newConfig.sourceLang !== config.sourceLang ||
+        newConfig.targetLang !== config.targetLang
       config = newConfig
       if (langChanged) {
         loadTranslations().then(() => {
@@ -1241,6 +1527,34 @@ async function init() {
       console.log('[LangLens] Config updated from popup')
     }
   })
+
+  // ─── SPA navigation detection ──────────────────────────────
+  // Inject nav-detect.js into the page's MAIN world via <script src>.
+  // It intercepts pushState/replaceState and fires 'langlens:nav' events.
+  const navScript = document.createElement('script')
+  navScript.src = chrome.runtime.getURL('nav-detect.js')
+  document.documentElement.appendChild(navScript)
+  navScript.onload = () => navScript.remove()
+
+  let lastUrl = location.href
+  let rescanTimer = null
+
+  function onSpaNavigation() {
+    if (location.href === lastUrl) return
+    lastUrl = location.href
+    console.log(`[LangLens] Navigation detected → ${location.href}`)
+    // Wait for new page to finish rendering, then rescan
+    if (rescanTimer) clearTimeout(rescanTimer)
+    rescanTimer = setTimeout(() => {
+      if (scannerPanel) refreshScanner()
+    }, 800)
+  }
+
+  // Listen for pushState/replaceState events from nav-detect.js
+  window.addEventListener('langlens:nav', onSpaNavigation)
+
+  // Also catch back/forward button
+  window.addEventListener('popstate', onSpaNavigation)
 
   console.log('[LangLens] Ready!', leMode ? `(${leMode} mode restored)` : '')
 }
@@ -1271,7 +1585,9 @@ async function initTranslatorAPI() {
       targetLanguage: config.targetLang,
     })
 
-    console.log(`[LangLens] Chrome Translator API ready (${config.sourceLang} → ${config.targetLang})`)
+    console.log(
+      `[LangLens] Chrome Translator API ready (${config.sourceLang} → ${config.targetLang})`,
+    )
   } catch (err) {
     console.log('[LangLens] Chrome Translator API init failed:', err.message)
   }

@@ -1,8 +1,15 @@
 {
   "name": "langlens",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "See and edit translations directly on your running app",
-  "keywords": ["i18n", "translation", "chrome-extension", "localization", "i18next", "react-intl"],
+  "keywords": [
+    "i18n",
+    "translation",
+    "chrome-extension",
+    "localization",
+    "i18next",
+    "react-intl"
+  ],
   "license": "MIT",
   "author": "LangLens",
   "repository": {
@@ -25,12 +32,15 @@
     "build": "tsc",
     "start": "node dist/cli.js",
     "dev": "tsc && node dist/cli.js",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "prepublishOnly": "tsc"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.7",
     "@types/node": "^25.5.0",
     "typescript": "^5.8.3"
   }
