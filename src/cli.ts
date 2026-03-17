@@ -17,7 +17,7 @@ import { DEFAULT_PORT, startServer } from './server.js'
 
 // ─── Constants ──────────────────────────────────────────────
 
-const VERSION = '1.0.0'
+const VERSION = '1.1.0'
 
 const HELP_TEXT = `
 LangLens v${VERSION} — See and edit translations on your running app
