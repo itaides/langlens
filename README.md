@@ -2,6 +2,8 @@
 
 A Chrome extension that lets you see and edit translations directly on your running app. No more switching between JSON files and your browser — hover over any text, see its translation key, and edit it in place.
 
+![LangLens Demo](assets/demo.gif)
+
 Built for teams where content editors, PMs, and translators need to review and fix translations without touching code.
 
 ## Quick Start
