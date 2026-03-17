@@ -1473,6 +1473,37 @@ async function init() {
     }
   })
 
+  // ─── SPA navigation detection ──────────────────────────────
+  // Re-scan page strings when the URL changes without a full reload
+
+  let lastUrl = location.href
+
+  function onNavigation() {
+    if (location.href === lastUrl) return
+    lastUrl = location.href
+    console.log(`[LangLens] Navigation detected → ${location.href}`)
+    // Wait for DOM to settle after route change
+    setTimeout(() => {
+      if (scannerPanel) refreshScanner()
+    }, 300)
+  }
+
+  // Intercept history.pushState and history.replaceState
+  const origPushState = history.pushState.bind(history)
+  const origReplaceState = history.replaceState.bind(history)
+
+  history.pushState = (...args) => {
+    origPushState(...args)
+    onNavigation()
+  }
+  history.replaceState = (...args) => {
+    origReplaceState(...args)
+    onNavigation()
+  }
+
+  // Back/forward button
+  window.addEventListener('popstate', onNavigation)
+
   console.log('[LangLens] Ready!', leMode ? `(${leMode} mode restored)` : '')
 }
 
