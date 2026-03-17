@@ -11,7 +11,7 @@ import {
   type IncomingMessage,
   type ServerResponse,
 } from 'node:http'
-import { join, resolve } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 import type { FrameworkInfo } from './detect-framework.js'
 import {
   getNamespaces,
@@ -35,7 +35,7 @@ const DEFAULT_PORT = 5567
 const MAX_BODY_SIZE = 5 * 1024 * 1024 // 5 MB
 
 const ALLOWED_ORIGIN_PATTERN =
-  /^(chrome-extension:\/\/|http:\/\/localhost(:\d+)?$)/
+  /^(chrome-extension:\/\/|https?:\/\/(?:localhost|127\.0\.0\.1)(:\d+)?$|https:\/\/.*\.trycloudflare\.com$)/
 
 function getCorsHeaders(origin: string | undefined): Record<string, string> {
   return {
@@ -52,8 +52,9 @@ function getCorsHeaders(origin: string | undefined): Record<string, string> {
 // ─── Path Safety ───────────────────────────────────────────
 
 function isSafePath(base: string, segment: string): boolean {
+  const baseResolved = resolve(base)
   const resolved = resolve(base, segment)
-  return resolved.startsWith(`${resolve(base)}/`)
+  return resolved.startsWith(baseResolved + sep)
 }
 
 function isSimpleName(name: string): boolean {

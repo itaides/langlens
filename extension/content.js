@@ -644,6 +644,9 @@ function addTextToFound(text, element, found, seenHardcoded) {
 function showScanner() {
   hideScanner()
 
+  // Start observing DOM changes for SPA navigation
+  if (window.__langlensObserver) window.__langlensObserver.start()
+
   scannerPanel = document.createElement('div')
   scannerPanel.className = 'le-scanner'
 
@@ -923,7 +926,7 @@ function showScanner() {
         (i) =>
           i.match.key.toLowerCase().includes(query) ||
           i.match.source.toLowerCase().includes(query) ||
-          i.match.target.toLowerCase().includes(query),
+          i.match.target?.toLowerCase().includes(query),
       )
     }
 
@@ -1312,6 +1315,9 @@ function importStrings() {
 }
 
 function hideScanner() {
+  // Stop observing DOM changes
+  if (window.__langlensObserver) window.__langlensObserver.stop()
+
   if (groupDropdownClickHandler) {
     document.removeEventListener('click', groupDropdownClickHandler)
     groupDropdownClickHandler = null
@@ -1494,43 +1500,51 @@ async function init() {
     }, 600)
   }
 
-  // Intercept history.pushState and history.replaceState
-  const origPushState = history.pushState.bind(history)
-  const origReplaceState = history.replaceState.bind(history)
+  // Intercept history.pushState and history.replaceState (guard against double-patching)
+  if (!history.pushState.__langlens) {
+    const origPushState = history.pushState.bind(history)
+    const origReplaceState = history.replaceState.bind(history)
 
-  history.pushState = (...args) => {
-    origPushState(...args)
-    onNavigation()
-  }
-  history.replaceState = (...args) => {
-    origReplaceState(...args)
-    onNavigation()
+    history.pushState = (...args) => {
+      origPushState(...args)
+      onNavigation()
+    }
+    history.pushState.__langlens = true
+
+    history.replaceState = (...args) => {
+      origReplaceState(...args)
+      onNavigation()
+    }
+    history.replaceState.__langlens = true
   }
 
   // Back/forward button
   window.addEventListener('popstate', onNavigation)
 
-  // MutationObserver — catches DOM changes after SPA route transitions
+  // MutationObserver — only active when scanner is open to avoid unnecessary overhead
   let mutationDebounceTimer = null
-  const observer = new MutationObserver(() => {
+  const spaObserver = new MutationObserver(() => {
     // Check if URL changed (some routers update DOM before pushState)
     if (location.href !== lastUrl) {
       lastUrl = location.href
       console.log(`[LangLens] Navigation detected (DOM) → ${location.href}`)
     }
-    // Debounce DOM mutations — rescan after DOM settles
-    if (scannerPanel) {
-      if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
-      mutationDebounceTimer = setTimeout(() => {
-        refreshScanner()
-      }, 800)
-    }
+    if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
+    mutationDebounceTimer = setTimeout(() => {
+      refreshScanner()
+    }, 800)
   })
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  })
+  // Expose observer start/stop for scanner lifecycle
+  window.__langlensObserver = {
+    start() {
+      spaObserver.observe(document.body, { childList: true, subtree: true })
+    },
+    stop() {
+      spaObserver.disconnect()
+      if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer)
+    },
+  }
 
   console.log('[LangLens] Ready!', leMode ? `(${leMode} mode restored)` : '')
 }
