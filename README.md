@@ -6,6 +6,10 @@ A Chrome extension that lets you see and edit translations directly on your runn
 
 Built for teams where content editors, PMs, and translators need to review and fix translations without touching code.
 
+## Why LangLens? 
+
+Because translating apps via JSON files is like editing a movie through a text file. LangLens gives you the visual context you need to make sure your translations actually make sense.
+
 ## Quick Start
 
 ```bash
